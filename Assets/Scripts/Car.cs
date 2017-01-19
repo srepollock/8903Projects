@@ -8,7 +8,7 @@ public class Car : MonoBehaviour {
 	public Driver d;
 	// Text
 	public Text bxT, bzT, txT, tzT, dxT, dzT;
-	public Text COMT, MIT, MT;
+	public Text COMT, MIT, MT, T, V;
 
 	public float m;
 	public Position COM;

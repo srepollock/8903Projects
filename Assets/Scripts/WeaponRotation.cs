@@ -4,6 +4,7 @@ using UnityEngine.UI;
 public class WeaponRotation : MonoBehaviour {
 
 	public Projectile projectile;
+	public TargetPosition target;
 	public Text rangex, rangey, correctGunAngle, currentGunAngle;
 
 	// Use this for initialization
@@ -38,5 +39,24 @@ public class WeaponRotation : MonoBehaviour {
 	void updateProjectile()
 	{
 
+	}
+
+	void correctAngle(TargetPosition _t, Projectile _p)
+	{
+		float	x,
+				velocityInitialX,
+				velocityFinalX,
+				accelerationX = 0,
+				timeX = 0,
+				y = 0,
+				velocityInitialY,
+				velocityFinalY,
+				accelerationY = 9.81f,
+				timeY;
+		x = _t.transform.position.x - _p.transform.position.x;
+		velocityInitialX = velocityFinalX = _p.initialVelocity;
+		velocityFinalY = velocityInitialX;
+		velocityInitialY = -1 * velocityInitialX;
+		
 	}
 }

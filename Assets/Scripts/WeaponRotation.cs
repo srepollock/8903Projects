@@ -27,6 +27,7 @@ public class WeaponRotation : MonoBehaviour {
 			projectile.rotate(this.transform.rotation);
 		}
 		updateAngle();
+		updateCorrectAngle();
 		updateProjectile();
 	}
 
@@ -38,25 +39,21 @@ public class WeaponRotation : MonoBehaviour {
 
 	void updateProjectile()
 	{
-
+		
 	}
 
-	void correctAngle(TargetPosition _t, Projectile _p)
+	float correctAngle(TargetPosition _t, Projectile _p)
 	{
-		float	x,
-				velocityInitialX,
-				velocityFinalX,
-				accelerationX = 0,
-				timeX = 0,
-				y = 0,
-				velocityInitialY,
-				velocityFinalY,
-				accelerationY = 9.81f,
-				timeY;
-		x = _t.transform.position.x - _p.transform.position.x;
-		velocityInitialX = velocityFinalX = _p.initialVelocity;
-		velocityFinalY = velocityInitialX;
-		velocityInitialY = -1 * velocityInitialX;
-		
+		float distance, gravity, velocity;
+		distance = _t.transform.position.x - _p.transform.position.x;
+		gravity = -9.8f;
+		velocity = _p.initialVelocity;
+		float theta = Mathf.Sin(0.5f * (gravity * (distance / velocity) / velocity));
+		return theta;
+	}
+
+	void updateCorrectAngle()
+	{
+		correctGunAngle.text = correctAngle(target, projectile).ToString();
 	}
 }

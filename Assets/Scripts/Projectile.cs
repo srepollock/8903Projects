@@ -15,6 +15,8 @@ public class Projectile : MonoBehaviour {
     /// Constant acceleration;
     /// </summary>
 	public float acceleration = -10f;
+	public float gravity = 9.8f;
+	public float angle = 0;
     public Text projectilex, projectiley, velocityText, timeText;
     /// <summary>
     /// Drag or wind resistance on the object.
@@ -52,18 +54,21 @@ public class Projectile : MonoBehaviour {
 
     void FixedUpdate()
     {
+		float 	x = Mathf.Cos(angle) * speed,
+				y = Mathf.Sin(angle) * speed;
         if (!stopped) {
 			StartRunning();
 			timer += Time.deltaTime;
-			if (drag) {
-				acceleration = -(0.001f) * Mathf.Pow(speed, 2);
-			}
-			speed += acceleration * Time.deltaTime;
-			//c.transform.position += new Vector3(speed, 0f, 0f) * Time.deltaTime;
+			// if (drag) {
+			// 	acceleration = -(0.001f) * Mathf.Pow(speed, 2);
+			// }
+			float xdist = x * Time.deltaTime;
+			float zdist = (y - timer * gravity) * Time.deltaTime;
+			this.transform.Translate(xdist, 0f, zdist);
 		}
 		UpdateTimeText(timer);
 		UpdateVelocityText(speed);
-		if (timer >= 8) { stopped = true; } // TODO Stop when hitting the target
+		//if (timer >= 8) { stopped = true; } // TODO Stop when hitting the target
     }
 
     void StartRunning()
@@ -94,5 +99,12 @@ public class Projectile : MonoBehaviour {
 	public void rotate(Quaternion q)
 	{
 		this.transform.rotation = q;
+	}
+
+	public float getHeight()
+	{
+		float h = 0;
+
+		return h;
 	}
 }

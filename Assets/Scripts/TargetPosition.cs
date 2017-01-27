@@ -11,6 +11,7 @@ public class TargetPosition : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		targetx.text = this.transform.position.x.ToString();
+		targety.text = this.transform.position.y.ToString();
 	}
 }

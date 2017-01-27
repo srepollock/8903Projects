@@ -19,6 +19,7 @@ public class WeaponRotation : MonoBehaviour {
 	void Update () {
 		updateAngle();
 		updateProjectile(projectile, angle);
+		updateText();
 	}
 
 	void LateUpdate()
@@ -26,33 +27,33 @@ public class WeaponRotation : MonoBehaviour {
 		if (Input.GetKeyDown(KeyCode.A))
 		{
 			// Rotate left
-			this.transform.Rotate(new Vector3(0f, -0.1f, 0f));
+			this.transform.Rotate(new Vector3(0f, 0f, 0.1f));
 			//projectile.rotate(this.transform.rotation);
 		}
 		if (Input.GetKeyDown(KeyCode.D))
 		{
 			// Rotate right
-			this.transform.Rotate(new Vector3(0f, 0.1f, 0f));
+			this.transform.Rotate(new Vector3(0f, 0f, -0.1f));
 			//projectile.rotate(this.transform.rotation);
 		}
 		if (Input.GetKey(KeyCode.W))
 		{
 			// Rotate left
-			this.transform.Rotate(new Vector3(0f, -1f, 0f));
+			this.transform.Rotate(new Vector3(0f, 0f, 1f));
 			//projectile.rotate(this.transform.rotation);
 		}
 		if (Input.GetKey(KeyCode.S))
 		{
 			// Rotate right
-			this.transform.Rotate(new Vector3(0f, 1f, 0f));
+			this.transform.Rotate(new Vector3(0f, 0f, -1f));
 			//projectile.rotate(this.transform.rotation);
 		}
 	}
 
 	void updateAngle()
 	{
-		currentGunAngle.text = Vector3.Angle(Vector3.forward, 
-			this.transform.forward).ToString();
+		currentGunAngle.text = Vector3.Angle(Vector3.right, 
+			this.transform.right).ToString();
 	}
 
 	void updateProjectile(Projectile _p, float angle)
@@ -64,12 +65,10 @@ public class WeaponRotation : MonoBehaviour {
 	{
 		float 	distance, 
 				velocity, 
-				velocityY,
 				theta;
 		distance = _t.transform.position.x - this.transform.position.x;
 		velocity = _p.initialVelocity;
-		velocityY = -velocity;
-		theta = 0.5f * Mathf.Asin((gravity * distance) / Mathf.Pow(velocity, 2));
+		theta = (Mathf.Asin((gravity * distance) / Mathf.Pow(velocity, 2f)) / 2f);
 		theta = theta * Mathf.Rad2Deg;
 		return theta;
 	}
@@ -78,5 +77,18 @@ public class WeaponRotation : MonoBehaviour {
 	{
 		angle = correctAngle(target, projectile);
 		correctGunAngle.text = angle.ToString();
+	}
+
+	void updateText()
+	{
+		updateRange();
+	}
+
+	void updateRange()
+	{
+		rangex.text = "" + (target.transform.position.x 
+			- this.transform.position.x);
+		rangey.text = "" + (target.transform.position.y 
+			- this.transform.position.y);
 	}
 }

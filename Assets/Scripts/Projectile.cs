@@ -10,7 +10,7 @@ public class Projectile : MonoBehaviour {
 	/// <summary>
     /// Current Speed
     /// </summary>
-	public float speed = 0f;
+	public float speed = 100f;
 	/// <summary>
     /// Constant acceleration;
     /// </summary>
@@ -28,6 +28,7 @@ public class Projectile : MonoBehaviour {
 	bool stopped = true;
 
 	float timer = 0;
+	float x = 0, y = 0;
 
     void Start()
     {
@@ -36,7 +37,21 @@ public class Projectile : MonoBehaviour {
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.L)) 
+        if (!stopped) {
+			StartRunning();
+			timer += Time.deltaTime;
+			// if (drag) {
+			// 	acceleration = -(0.001f) * Mathf.Pow(speed, 2);
+			// }
+			float xdist = x * Time.deltaTime;
+			float ydist = (y - (timer * gravity)) * Time.deltaTime;
+			this.transform.Translate(xdist, ydist, 0f);
+		}
+		UpdateTimeText(timer);
+		UpdateVelocityText(speed);
+		UpdatePositionText();
+		//if (timer >= 8) { stopped = true; } // TODO Stop when hitting the target
+		if (Input.GetKeyDown(KeyCode.L)) 
         {
 			drag = !drag;
 		}
@@ -52,31 +67,14 @@ public class Projectile : MonoBehaviour {
 		}
     }
 
-    void FixedUpdate()
-    {
-		float 	x = Mathf.Cos(angle) * speed,
-				y = Mathf.Sin(angle) * speed;
-        if (!stopped) {
-			StartRunning();
-			timer += Time.deltaTime;
-			// if (drag) {
-			// 	acceleration = -(0.001f) * Mathf.Pow(speed, 2);
-			// }
-			float xdist = x * Time.deltaTime;
-			float zdist = (y - timer * gravity) * Time.deltaTime;
-			this.transform.Translate(xdist, 0f, zdist);
-		}
-		UpdateTimeText(timer);
-		UpdateVelocityText(speed);
-		//if (timer >= 8) { stopped = true; } // TODO Stop when hitting the target
-    }
-
     void StartRunning()
     {
         if(timer == 0) 
         {
 			speed = initialVelocity;
 		}
+		x = Mathf.Cos(angle * Mathf.Deg2Rad) * speed;
+		y = Mathf.Sin(angle * Mathf.Deg2Rad) * speed;
     }
 
     void UpdateTimeText (float t) 
@@ -101,10 +99,18 @@ public class Projectile : MonoBehaviour {
 		this.transform.rotation = q;
 	}
 
-	public float getHeight()
+	void UpdatePositionText()
 	{
-		float h = 0;
+		projectilex.text = this.transform.position.x.ToString();
+		projectiley.text = this.transform.position.y.ToString();
+	}
 
-		return h;
+	void OnTriggerEnter(Collider col)
+	{
+		Debug.Log("Collision: " + col.gameObject.name);
+		if (col.gameObject.tag == "target")
+		{
+			stopped = true;
+		}
 	}
 }

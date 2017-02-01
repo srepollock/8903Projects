@@ -108,7 +108,7 @@ public class Projectile : MonoBehaviour {
 	void OnTriggerEnter(Collider col)
 	{
 		Debug.Log("Collision: " + col.gameObject.name);
-		if (col.gameObject.tag == "target")
+		if (col.gameObject.name == "Center")
 		{
 			stopped = true;
 		}

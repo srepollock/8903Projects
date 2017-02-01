@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 public class TargetPosition : MonoBehaviour {
-	public Text targetx, targety;
+	public Text targetx, targety, targetz;
 
 	// Use this for initialization
 	void Start () {

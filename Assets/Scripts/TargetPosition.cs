@@ -13,5 +13,6 @@ public class TargetPosition : MonoBehaviour {
 	void Update () {
 		targetx.text = this.transform.position.x.ToString();
 		targety.text = this.transform.position.y.ToString();
+		targetz.text = this.transform.position.z.ToString();
 	}
 }

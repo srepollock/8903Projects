@@ -48,11 +48,14 @@ public class Projectile : MonoBehaviour {
 
     void Update()
     {
+		float dtime;
         if (!stopped) {
 			StartRunning();
 			timer += Time.deltaTime;
+			dtime = Time.deltaTime;
 			//move2D();
-			move3D(timer);
+			move3D(timer, dtime);
+			//if (this.transform.position.y < 0.001) stopped = true;
 		}
 		UpdateTimeText(timer);
 		UpdateVelocityText(speed);
@@ -99,7 +102,8 @@ public class Projectile : MonoBehaviour {
 	/// Move in 3D space.
 	/// </summary>
 	/// <param name="_t">Total Time</param>
-	void move3D(float _t)
+	/// <param name="_dt">Delta Time</param>
+	void move3D(float _t, float _dt)
 	{
 		float 	vx, vy, vz;
 		float 	radAlpha = Mathf.Deg2Rad * alpha,
@@ -107,9 +111,7 @@ public class Projectile : MonoBehaviour {
 		vx = speed * Mathf.Sin(radAlpha) * Mathf.Cos(radGamma);
 		vy = speed * Mathf.Cos(radAlpha) + (-gravity * _t);
 		vz = speed * Mathf.Sin(radAlpha) * Mathf.Sin(radGamma) * -1; // -1 because Left Hand System
-		//Debug.Log("Alpha: " + alpha + " Gamma: " + gamma);
-		//Debug.Log("Vx: " + vx + " Vy: " + vy + " Vz: " + vz);
-		Vector3 vf = new Vector3(vx, vy, vz) * Time.deltaTime;
+		Vector3 vf = new Vector3(vx * _dt, vy * _dt, vz * _dt);
 		this.transform.Translate(vf);
 	}
 
@@ -139,6 +141,7 @@ public class Projectile : MonoBehaviour {
 	{
 		projectilex.text = this.transform.position.x.ToString();
 		projectiley.text = this.transform.position.y.ToString();
+		projectilez.text = this.transform.position.z.ToString();
 	}
 
 	void OnTriggerEnter(Collider col)
@@ -147,7 +150,7 @@ public class Projectile : MonoBehaviour {
 		if (col.gameObject.name == "Center")
 		{
 			stopped = true;
-			col.gameObject.GetComponent<ParticleSystem>().enableEmission = true;
+			//col.gameObject.GetComponent<ParticleSystem>().enableEmission = true;
 		}
 	}
 }

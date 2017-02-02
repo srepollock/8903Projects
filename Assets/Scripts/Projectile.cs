@@ -147,6 +147,7 @@ public class Projectile : MonoBehaviour {
 		if (col.gameObject.name == "Center")
 		{
 			stopped = true;
+			col.gameObject.GetComponent<ParticleSystem>().enableEmission = true;
 		}
 	}
 }

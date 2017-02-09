@@ -17,6 +17,10 @@ public class Projectile : MonoBehaviour {
 	public float acceleration = -10f;
 	public float gravity = 9.8f;
 	public float angle = 0;
+	/// <summary>
+	/// Radius of the projectile. Taken from the scale and set int awake;
+	/// </summary>
+	public float radius = 0;
     public Text projectilex, projectiley, velocityText, timeText;
     /// <summary>
     /// Drag or wind resistance on the object.
@@ -28,12 +32,20 @@ public class Projectile : MonoBehaviour {
 	bool stopped = true;
 
 	float timer = 0;
+	/// <summary>
+	/// For 3D movement
+	/// </summary>
 	float x = 0, y = 0;
 
     void Start()
     {
 
     }
+
+	void Awake()
+	{
+		 radius = this.transform.localScale.x / 2;
+	}
 
     void Update()
     {

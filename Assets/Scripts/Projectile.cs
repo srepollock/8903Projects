@@ -6,6 +6,7 @@ public class Projectile : MonoBehaviour {
 	/// Reference to the weapon shooting the projectile.
 	/// </summary>
 	public WeaponRotation gun;
+	public GameObject point;
     public float initialVelocity = 100f; // 100 m/(s^2)
 	/// <summary>
     /// Current Speed
@@ -17,11 +18,17 @@ public class Projectile : MonoBehaviour {
 	public float acceleration = -10f;
 	public float gravity = 9.8f;
 	public float angle = 0;
+    public Text projectilex, projectiley, velocityText, timeText;
+
+	// Rotation of the ball
 	/// <summary>
 	/// Radius of the projectile. Taken from the scale and set int awake;
 	/// </summary>
 	public float radius = 0;
-    public Text projectilex, projectiley, velocityText, timeText;
+	public float angularVelocity = 1.8f; // 1.8rad/s^2
+	public float angularAcceleration = 0f; // toggle between 0 and 0.6rad/s^2
+	public float ballAngle = 0f;
+
     /// <summary>
     /// Drag or wind resistance on the object.
     /// </summary>
@@ -33,7 +40,7 @@ public class Projectile : MonoBehaviour {
 
 	float timer = 0;
 	/// <summary>
-	/// For 3D movement
+	/// Position of the object
 	/// </summary>
 	float x = 0, y = 0;
 
@@ -42,27 +49,20 @@ public class Projectile : MonoBehaviour {
 
     }
 
-	void Awake()
-	{
-		 radius = this.transform.localScale.x / 2;
-	}
-
     void Update()
     {
         if (!stopped) {
 			StartRunning();
 			timer += Time.deltaTime;
-			// if (drag) {
-			// 	acceleration = -(0.001f) * Mathf.Pow(speed, 2);
-			// }
 			float xdist = x * Time.deltaTime;
 			float ydist = (y - (timer * gravity)) * Time.deltaTime;
-			this.transform.Translate(xdist, ydist, 0f);
+			setPointPosition();
+			this.transform.Translate(xdist, ydist, 0f, Space.World);
+			if (timer >= 6f) stopped = true; // Stop at 6s
 		}
 		UpdateTimeText(timer);
 		UpdateVelocityText(speed);
 		UpdatePositionText();
-		//if (timer >= 8) { stopped = true; } // TODO Stop when hitting the target
 		if (Input.GetKeyDown(KeyCode.L)) 
         {
 			drag = !drag;
@@ -74,7 +74,6 @@ public class Projectile : MonoBehaviour {
 		}
 		if (Input.GetKeyDown(KeyCode.Space)) 
         {
-            // Shoot
 			stopped = !stopped;
 		}
     }
@@ -105,7 +104,16 @@ public class Projectile : MonoBehaviour {
 		timer = 0;
 		stopped = false;
 	}
+	void setPointPosition()
+	{
+		this.transform.Rotate(0f, 0f, angularVelocity);
+	}
 
+	/// <summary>
+	/// *DEPRICATED*
+	/// Rotate the object with the quaterion passed in
+	/// </summary>
+	/// <param name="q">Quaterion to rotate by</param>
 	public void rotate(Quaternion q)
 	{
 		this.transform.rotation = q;
@@ -119,7 +127,6 @@ public class Projectile : MonoBehaviour {
 
 	void OnTriggerEnter(Collider col)
 	{
-		Debug.Log("Collision: " + col.gameObject.name);
 		if (col.gameObject.name == "Center")
 		{
 			stopped = true;

@@ -27,7 +27,8 @@ public class Projectile : MonoBehaviour {
 	/// Angle to fire and move
 	/// </summary>
 	public float angle = 0;
-    public Text projectilex, projectiley, velocityText, timeText;
+    public Text projectilex, projectiley, velocityText, timeText, angularDisplacement,
+		angularVelocity, angularAcceleration, pointPosition, pointVelocity, pointAcceleration;
 
 	// Rotation of the ball
 	/// <summary>
@@ -38,6 +39,15 @@ public class Projectile : MonoBehaviour {
 	/// Omega
 	/// </summary>
 	public float omegao = 1.8f; // 1.8rad/s^2
+	float omega = 0f;
+	Vector3 omegaV;
+	float theta = 0f;
+	Vector3 RV;
+	Vector3 projVelocity;
+	Vector3 projAcceleration;
+	Vector3 rotV;
+	Vector3 alphaV;
+	Vector3 rotA;
 	/// <summary>
 	/// Alpha
 	/// </summary>
@@ -75,12 +85,13 @@ public class Projectile : MonoBehaviour {
 			float xdist = x * Time.deltaTime;
 			float ydist = (y - (timer * gravity)) * Time.deltaTime;
 			this.transform.Translate(xdist, ydist, 0f, Space.World);
-			rotateProjectile(xdist, ydist);
+			rotateProjectile(x, y - (timer * gravity));
 			if (timer >= 6f) stopped = true; // Stop at 6s
 		}
 		UpdateTimeText(timer);
 		UpdateVelocityText(speed);
 		UpdatePositionText();
+		UpdateText();
 		if (Input.GetKeyDown(KeyCode.L)) 
         {
 			drag = !drag;
@@ -134,14 +145,16 @@ public class Projectile : MonoBehaviour {
 	}
 	void rotateProjectile(float xdist, float ydist)
 	{
-		float omega = updatingOmega(omegao, alphao, timer);
-		Vector3 omegaV = new Vector3(0f, 0f, omega);
-		Vector3 projVelocity = new Vector3(xdist, ydist, 0f);
-		float theta = calculateRotationAngle(rotationThetao, omega, timer, alphao);
-		Vector3 RV = new Vector3(radius * Mathf.Cos(theta), radius * Mathf.Sin(theta), 0f);
-		Vector3 v = calculateRotationVelocity(projVelocity, omegaV, RV);
-		Vector3 alphaV = new Vector3(alphao, alphao, 0f);
-		Vector3 a = calculateRotationAcceleration(projVelocity, omegaV, alphaV, RV);
+		omega = updatingOmega(omegao, alphao, timer);
+		omegaV = new Vector3(0f, 0f, omega);
+		theta = calculateRotationAngle(rotationThetao, omega, timer, alphao);
+		RV = new Vector3(radius * Mathf.Cos(theta), radius * Mathf.Sin(theta), 0f);
+		projVelocity = new Vector3(xdist, ydist, 0f);
+		rotV = calculateRotationVelocity(projVelocity, omegaV, RV);
+		alphaV = new Vector3(alphao, alphao, 0f);
+		projAcceleration = new Vector3(0f, -gravity, 0f);
+		rotA = calculateRotationAcceleration(projAcceleration, omegaV, alphaV, RV);
+		this.transform.Rotate(omegaV * Mathf.Rad2Deg * Time.deltaTime, Space.World);
 	}
 	/// <summary>
 	/// Calculate the updating omega
@@ -161,9 +174,9 @@ public class Projectile : MonoBehaviour {
 	/// <param name="_w">Omega</param>
 	/// <param name="_R">Radius</param>
 	/// <returns>Velocity of rotation</returns>
-	Vector3 calculateRotationVelocity(Vector3 _v, Vector3 _omegao, Vector3 _R)
+	Vector3 calculateRotationVelocity(Vector3 _v, Vector3 _omega, Vector3 _R)
 	{
-		return _v + Vector3.Cross(_omegao, _R);
+		return _v + Vector3.Cross(_omega, _R);
 	}
 	/// <summary>
 	/// Calculate the rotation acceleration of the object.
@@ -175,7 +188,9 @@ public class Projectile : MonoBehaviour {
 	/// <returns>Acceleration of rotation</returns>
 	Vector3 calculateRotationAcceleration(Vector3 _acg, Vector3 _omega, Vector3 _alpha, Vector3 _R)
 	{
-		return _acg + Vector3.Cross(_alpha, _R) + Vector3.Cross(_omega,Vector3.Cross(_omega, _R));
+		return _acg + 
+			Vector3.Cross(_alpha, _R) + 
+			Vector3.Cross(_omega, Vector3.Cross(_omega, _R));
 	}
 	/// <summary>
 	/// Calculate rotation angle from the point to the center at the time.
@@ -187,7 +202,7 @@ public class Projectile : MonoBehaviour {
 	/// <returns>Theta at time</returns>
 	float calculateRotationAngle(float _thetao, float _omegao, float _t, float _alpha)
 	{
-		return _thetao + _omegao * _t + 0.5f * _alpha * Mathf.Pow(_t, 2);
+		return _thetao + (_omegao * _t) + (0.5f * _alpha * Mathf.Pow(_t, 2));
 	}
 	void setPointPosition(float _omega)
 	{
@@ -209,6 +224,18 @@ public class Projectile : MonoBehaviour {
 	{
 		projectilex.text = this.transform.position.x.ToString();
 		projectiley.text = this.transform.position.y.ToString();
+	}
+	/// <summary>
+	/// Update all text for the projectile.
+	/// </summary>
+	void UpdateText()
+	{
+		angularDisplacement.text = theta + " rad";
+		angularVelocity.text = omega + " rad/s";
+		angularAcceleration.text = alphao + " rad/s^2";
+		pointPosition.text = "(" + point.transform.position.x + "m, " + point.transform.position.y + "m)";
+		pointVelocity.text = "(" + rotV.x + "m/s, " + rotV.y + "m/s)";;
+		pointAcceleration.text = "(" + rotA.x + "m/s^2, " + rotA.y + "m/s^2)";
 	}
 	/// <summary>
 	/// Gather triggers for collison on entering the trigger

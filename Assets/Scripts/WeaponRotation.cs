@@ -8,12 +8,11 @@ public class WeaponRotation : MonoBehaviour {
 	public Text rangex, rangey, correctGunAngle, currentGunAngle;
 
 	public float gravity = 9.8f;
-	public float angle = 24.7f;
+	public float angle;
 
 	// Use this for initialization
 	void Start () {
 		updateCorrectAngle();
-		this.transform.Rotate(new Vector3(0f, 0f, 24.07f));
 	}
 	
 	// Update is called once per frame

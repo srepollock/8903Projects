@@ -147,11 +147,11 @@ public class Projectile : MonoBehaviour {
 	{
 		omega = updatingOmega(omegao, alphao, timer);
 		omegaV = new Vector3(0f, 0f, omega);
-		theta = calculateRotationAngle(rotationThetao, omega, timer, alphao);
+		theta = calculateRotationAngle(rotationThetao, omegao, timer, alphao);
 		RV = new Vector3(radius * Mathf.Cos(theta), radius * Mathf.Sin(theta), 0f);
 		projVelocity = new Vector3(xdist, ydist, 0f);
 		rotV = calculateRotationVelocity(projVelocity, omegaV, RV);
-		alphaV = new Vector3(alphao, alphao, 0f);
+		alphaV = new Vector3(0f, 0f, alphao);
 		projAcceleration = new Vector3(0f, -gravity, 0f);
 		rotA = calculateRotationAcceleration(projAcceleration, omegaV, alphaV, RV);
 		this.transform.Rotate(omegaV * Mathf.Rad2Deg * Time.deltaTime, Space.World);
@@ -165,7 +165,7 @@ public class Projectile : MonoBehaviour {
 	/// <returns>Omega</returns>
 	float updatingOmega(float _omegao, float _alpha, float _t)
 	{
-		return _omegao + _alpha * _t;
+		return _omegao + (_alpha * _t);
 	}
 	/// <summary>
 	/// Calculate the rotation velocity

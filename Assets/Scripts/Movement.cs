@@ -240,17 +240,16 @@ public class Movement : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.A)) {
             alphaBool = !alphaBool;
         }
+        updateText();
+    }
+
+    void FixedUpdate() {
         // Rotation loop
         if (!stopped) {
             rotateLoop(car);
             moveObject(car);
             updateTimer(Time.deltaTime);
         }
-        updateText();
-    }
-
-    void FixedUpdate() {
-
     }
 
     // DEPRICATED
@@ -336,6 +335,7 @@ public class Movement : MonoBehaviour {
 	/// <returns>Theta at time</returns>
 	float calculateRotationAngle(float _thetao, Vector3 _omega, Vector3 _alpha, float _t)
 	{
+        Debug.Log("Alpha: " + alpha.z);
 		return _thetao + (_omega.z * _t) + (0.5f * _alpha.z * Mathf.Pow(_t, 2));
 	}
 
@@ -393,6 +393,7 @@ public class Movement : MonoBehaviour {
         r = arrowToCOM(arrow.transform.position, car.COM);
         theta = calculateRotationAngle(thetao, previousOmega, alpha, timer);
         omega = calculateAngularVelocity(omega, alpha, Time.deltaTime);
+        Debug.Log("Omega: " + omega.z);
         if (!stopAcceleration) {
             alpha = calculateAngularAcceleration(r, F, I);
         } else {
@@ -402,10 +403,9 @@ public class Movement : MonoBehaviour {
             alpha = new Vector3();
         }
         previousOmega = omega;
-        this.transform.Rotate(omega * Mathf.Rad2Deg * Time.deltaTime);
-        if (getTimer() >= 2f) {
-            stopAcceleration = true;
-        }
+        //this.transform.Rotate(omega * Mathf.Rad2Deg * Time.deltaTime);
+        this.transform.RotateAround(car.COM, Vector3.forward, (omega.z * Mathf.Rad2Deg * Time.deltaTime));
+        if (getTimer() >= 1.96f) stopAcceleration = true;
     }
 
     /// <summary>
@@ -413,14 +413,14 @@ public class Movement : MonoBehaviour {
     /// </summary>
     /// <param name="car">Car</param>
     public void moveObject(Car _car) {
-        if (!stopAcceleration) {
+        if (getTimer() >= 7.96f) stopped = true;
+        if (!stopAcceleration || !(getTimer() >= 2f)) {
             acceleration = calculateObjectAcceleration(F, _car.m);
             velocity = calculateObjectVelocity(acceleration, getTimer());
         } else {
             acceleration = new Vector3();
         }
         _car.transform.position += (velocity * Time.deltaTime);
-        if (getTimer() >= 8f) stopped = true;
     }
 
     // DEPRICATED

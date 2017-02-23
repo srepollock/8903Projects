@@ -292,9 +292,11 @@ public class Movement : MonoBehaviour {
 	/// <param name="_alpha">Alpha</param>
 	/// <param name="_t">Total time</param>
 	/// <returns>Omega</returns>
-	Vector3 calculateAngularVelocity(Vector3 _prevOmega, Vector3 _alpha, float _t)
+	Vector3 calculateAngularVelocity(Vector3 _omega, Vector3 _alpha, float _t)
 	{
-		return new Vector3(0f, 0f, (_prevOmega.z + (_alpha.z * _t)));
+        float curOmega = _omega.z + (_alpha.z * _t);
+        previousOmega.z = curOmega;
+		return new Vector3(0f, 0f, curOmega);
 	}
 
     /// <summary>
@@ -390,7 +392,7 @@ public class Movement : MonoBehaviour {
     public void rotateLoop(Car car) {
         r = arrowToCOM(arrow.transform.position, car.COM);
         theta = calculateRotationAngle(thetao, previousOmega, alpha, timer);
-        omega = calculateAngularVelocity(previousOmega, alpha, 1/60f);
+        omega = calculateAngularVelocity(omega, alpha, Time.deltaTime);
         if (!stopAcceleration) {
             alpha = calculateAngularAcceleration(r, F, I);
         } else {

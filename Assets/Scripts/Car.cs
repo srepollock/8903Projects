@@ -23,6 +23,10 @@ public class Car : MonoBehaviour {
 
 	void Start() {
 		setMassTotalCar();
+		setCOMCar();
+		DistCOM();
+		InertiaCOM();
+		momentOfInertia();
 	}
 
 	void Update() {
@@ -39,13 +43,17 @@ public class Car : MonoBehaviour {
 
 	public void setCOMCar() {
 		float 	xCOM = 0, 
-				zCOM = 0;
+				yCOM = 0;
 		xCOM = totalxCOM();
-		zCOM = totalzCOM();
-		COM = new Vector3(xCOM, zCOM, 0f);
+		yCOM = totalyCOM();
+		COM = new Vector3(xCOM, yCOM, 0f);
 	}
 
-	public float getCOMCar() {
+	public Vector3 getCOMCar() {
+		return this.COM;
+	}
+
+	public float getInertiaCar() {
 		return tI;
 	}
 
@@ -61,11 +69,11 @@ public class Car : MonoBehaviour {
 		);
 	}
 
-	float totalzCOM() {
+	float totalyCOM() {
 		return (
-			(b.m * b.transform.position.z) +
-			(t.m * t.transform.position.z) +
-			(d.m * d.transform.position.z)
+			(b.m * b.transform.position.y) +
+			(t.m * t.transform.position.y) +
+			(d.m * d.transform.position.y)
 		) / (
 			b.m +
 			t.m +
@@ -76,15 +84,15 @@ public class Car : MonoBehaviour {
 	void DistCOM() {
 		BDistCOM = Mathf.Sqrt(
 				Mathf.Pow(b.transform.position.x - COM.x, 2) +
-				Mathf.Pow(b.transform.position.z - COM.y, 2)
+				Mathf.Pow(b.transform.position.y - COM.y, 2)
 		);
 		TDistCOM = Mathf.Sqrt(
 				Mathf.Pow(t.transform.position.x - COM.x, 2) +
-				Mathf.Pow(t.transform.position.z - COM.y, 2)
+				Mathf.Pow(t.transform.position.y - COM.y, 2)
 		);
 		DDistCOM = Mathf.Sqrt(
 				Mathf.Pow(d.transform.position.x - COM.x, 2) +
-				Mathf.Pow(d.transform.position.z - COM.y, 2)
+				Mathf.Pow(d.transform.position.y - COM.y, 2)
 		);
 	}
 
@@ -104,11 +112,11 @@ public class Car : MonoBehaviour {
 	void UpdateText() {
 		// x,z
 		bxT.text = b.transform.position.x.ToString();
-		bzT.text = b.transform.position.z.ToString();
+		bzT.text = b.transform.position.y.ToString();
 		txT.text = t.transform.position.x.ToString();
-		tzT.text = t.transform.position.z.ToString();
+		tzT.text = t.transform.position.y.ToString();
 		dxT.text = d.transform.position.x.ToString();
-		dzT.text = d.transform.position.z.ToString();
+		dzT.text = d.transform.position.y.ToString();
 
 		COMT.text = COM.x + ", " + COM.y;
 		MIT.text = tI.ToString() + "kg m^2";

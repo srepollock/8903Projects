@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Movement : MonoBehaviour {
     // There is a better way to do this. Fix for the final
@@ -8,11 +9,11 @@ public class Movement : MonoBehaviour {
     /// <summary>
     /// Velocity of the object.
     /// </summary>
-    public float velocity = 100f;
+    public Vector3 velocity = new Vector3(0f, 0f, 0f);
     /// <summary>
     /// Acceleration of the object.
     /// </summary>
-    public float acceleration = -10f;
+    public Vector3 acceleration = new Vector3(0f, 0f, 0f);
     /// <summary>
     /// Radius of the object to be rotated (basically width)
     /// </summary>
@@ -32,7 +33,17 @@ public class Movement : MonoBehaviour {
     /// <summary>
     /// Start or stop game movement
     /// </summary>
-    bool stopped = true;
+    bool    stopped = true,
+            stopAcceleration = false,
+            alphaBool = false;
+    /// <summary>
+    /// Object Velocity
+    /// </summary>
+    Vector3 objectVelocity;
+    /// <summary>
+    /// Object Acceleration
+    /// </summary>
+    Vector3 objectAcceleration;
     /// <summary>
     /// Force(forceX, forceY, forceZ) Vector
     /// </summary>
@@ -52,7 +63,8 @@ public class Movement : MonoBehaviour {
     /// <summary>
     /// Angular Velocity
     /// </summary>
-    Vector3 omega = new Vector3(0f, 0f, 0f);
+    Vector3 omega;
+    Vector3 previousOmega = new Vector3();
     /// <summary>
     /// Initial Angular Acceleration
     /// </summary>
@@ -60,7 +72,7 @@ public class Movement : MonoBehaviour {
     /// <summary>
     /// Angular Acceleration
     /// </summary>
-    Vector3 alpha = new Vector3(0f, 0f, 0f);
+    Vector3 alpha;
     /// <summary>
     /// Initial Angle of Rotation of the object
     /// </summary>
@@ -74,17 +86,16 @@ public class Movement : MonoBehaviour {
     /// </summary>
     float timer = 0f;
 
-    void Start() {
+// Text
 
-    }
-
-    void Update() {
-
-    }
-
-    void FixedUpdate() {
-
-    }
+    public Text ForceText, 
+                TimeText, 
+                vText, 
+                aText, 
+                thetaText, 
+                omegaText, 
+                alphaText,
+                radialText;
 
     /// <summary>
     /// Update the timer with the value passed in.
@@ -109,14 +120,6 @@ public class Movement : MonoBehaviour {
         timer = 0f;
     }
 
-    // /// <summary>
-    // /// Sets omega
-    // /// </summary>
-    // /// <param name="o">Value to set omega to</param>
-    // public void setOmega(float o) {
-    //     omega = o;
-    // }
-
     /// <summary>
     /// Get the omega
     /// </summary>
@@ -131,22 +134,6 @@ public class Movement : MonoBehaviour {
     public void resetOmega() {
         omega = omegao;
     }
-
-    // /// <summary>
-    // /// Sets alpha.z
-    // /// </summary>
-    // /// <param name="z">Value to set alpha.z to</param>
-    // public void setAlpha(float z) {
-    //     alpha.z = z;
-    // }
-
-    // /// <summary>
-    // /// Sets alpha
-    // /// </summary>
-    // /// <param name="a">Vector3 to set alpha to</param>
-    // public void setAlpha(Vector3 a) {
-    //     alpha = a;
-    // }
 
     /// <summary>
     /// Get the alpha
@@ -242,6 +229,30 @@ public class Movement : MonoBehaviour {
         return r;
     }
 
+    void Start() {
+        initRotation(arrow, car);
+    }
+
+    void Update() {
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            stopped = !stopped;
+        }
+        if (Input.GetKeyDown(KeyCode.A)) {
+            alphaBool = !alphaBool;
+        }
+        // Rotation loop
+        if (!stopped) {
+            rotateLoop(car);
+            moveObject(car);
+            updateTimer(Time.deltaTime);
+        }
+        updateText();
+    }
+
+    void FixedUpdate() {
+
+    }
+
     // DEPRICATED
     /// <summary>
     /// Create Force Vector
@@ -255,15 +266,35 @@ public class Movement : MonoBehaviour {
     }
 
     /// <summary>
+    /// Calculate the Object Acceleration
+    /// </summary>
+    /// <param name="_F">Force Vector</param>
+    /// <param name="_M">Mass of Object</param>
+    /// <returns>Acceleration Vector</returns>
+    Vector3 calculateObjectAcceleration(Vector3 _F, float _M) {
+        return _F / _M;
+    }
+
+    /// <summary>
+    /// Calculate the Object Velocity
+    /// </summary>
+    /// <param name="_a">Acceleration Vector</param>
+    /// <param name="_t">Time</param>
+    /// <returns>Object Velocity</returns>
+    Vector3 calculateObjectVelocity(Vector3 _a, float _t) {
+        return _a * _t;
+    }
+
+    /// <summary>
 	/// Calculate the updating Angular Velocity (omega)
 	/// </summary>
 	/// <param name="_omegao">Initial Omega</param>
 	/// <param name="_alpha">Alpha</param>
 	/// <param name="_t">Total time</param>
 	/// <returns>Omega</returns>
-	Vector3 calculateAngularVelocity(Vector3 _omegao, Vector3 _alpha, float _t)
+	Vector3 calculateAngularVelocity(Vector3 _prevOmega, Vector3 _alpha, float _t)
 	{
-		return new Vector3(0f, 0f, (_omegao.z + (_alpha.z * _t)));
+		return new Vector3(0f, 0f, (_prevOmega.z + (_alpha.z * _t)));
 	}
 
     /// <summary>
@@ -301,9 +332,9 @@ public class Movement : MonoBehaviour {
 	/// <param name="_t">Total time</param>
 	/// <param name="_alpha">Angular Acceleration</param>
 	/// <returns>Theta at time</returns>
-	float calculateRotationAngle(float _thetao, Vector3 _omegao, Vector3 _alpha, float _t)
+	float calculateRotationAngle(float _thetao, Vector3 _omega, Vector3 _alpha, float _t)
 	{
-		return _thetao + (_omegao.z * _t) + (0.5f * _alpha.z * Mathf.Pow(_t, 2));
+		return _thetao + (_omega.z * _t) + (0.5f * _alpha.z * Mathf.Pow(_t, 2));
 	}
 
     /// <summary>
@@ -346,9 +377,9 @@ public class Movement : MonoBehaviour {
     public void initRotation(Arrow arrow, Car car) {
         resetTheta();
         resetOmega();
-        setR(arrowToCOM(arrow.transform.position, car.COM));
-        setForceVector(new Vector3(forceX, forceY, forceZ));
-        I = car.getCOMCar();
+        r = arrowToCOM(arrow.transform.position, car.COM);
+        F = new Vector3(forceX, forceY, forceZ);
+        I = car.getInertiaCar();
         alpha = (calculateAngularAcceleration(r, F, I));
         resetTimer();
     }
@@ -357,17 +388,48 @@ public class Movement : MonoBehaviour {
     /// Rotation loop of the object
     /// </summary>
     public void rotateLoop(Car car) {
-        setTheta(calculateRotationAngle(thetao, omegao, getAlpha(), getTimer()));
-        omega = calculateAngularVelocity(omegao, getAlpha(), getTimer());
-        alpha = calculateAngularAcceleration(r, F, I);
-        updateTimer(Time.deltaTime);
-        if (getTimer() >= 2f) {
-            stopped = true;
+        r = arrowToCOM(arrow.transform.position, car.COM);
+        theta = calculateRotationAngle(thetao, previousOmega, alpha, timer);
+        omega = calculateAngularVelocity(previousOmega, alpha, 1/60f);
+        if (!stopAcceleration) {
+            alpha = calculateAngularAcceleration(r, F, I);
+        } else {
+            alpha = new Vector3();
         }
+        if (alphaBool) {
+            alpha = new Vector3();
+        }
+        previousOmega = omega;
+        this.transform.Rotate(omega * Mathf.Rad2Deg * Time.deltaTime);
+        if (getTimer() >= 2f) {
+            stopAcceleration = true;
+        }
+    }
+
+    /// <summary>
+    /// Move the car
+    /// </summary>
+    /// <param name="car">Car</param>
+    public void moveObject(Car _car) {
+        if (!stopAcceleration) {
+            acceleration = calculateObjectAcceleration(F, _car.m);
+            velocity = calculateObjectVelocity(acceleration, getTimer());
+        } else {
+            acceleration = new Vector3();
+        }
+        _car.transform.position += (velocity * Time.deltaTime);
+        if (getTimer() >= 8f) stopped = true;
     }
 
     // DEPRICATED
     void updateText() {
-
+        ForceText.text = F.ToString() + " N";
+        TimeText.text = timer.ToString() + " sec";
+        vText.text = velocity.ToString() + " m/s";
+        aText.text = acceleration.ToString() + " m/s^2";
+        thetaText.text = theta + " rads";
+        omegaText.text = omega.ToString();
+        alphaText.text = alpha.ToString();
+        radialText.text = r.ToString();
     }
 }

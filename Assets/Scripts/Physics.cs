@@ -14,7 +14,7 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Mass of the object
     /// </summary>
-    public float mass = 0f;
+    public float mass = 10e6f;
     /// <summary>
     /// Radius of the object to be rotated (basically width)
     /// </summary>
@@ -27,7 +27,16 @@ public class Physics : MonoBehaviour {
     /// Thrust to move the object (in water). Should remain constant for test 
     /// purposes
     /// </summary>
-    public float thrust = 10000000;
+    public float thrust = 10e7f;
+    public Text massText,
+                depthText,
+                dragText,
+                tcText,
+                positionText,
+                velocityText,
+                accelerationText,
+                timeText,
+                tauText;
     /// <summary>
     /// Start or stop game movement
     /// </summary>
@@ -88,6 +97,10 @@ public class Physics : MonoBehaviour {
     /// </summary>
     float distance = 0f;
     /// <summary>
+    /// Depth of the object. Used in boat project
+    /// </summary>
+    float depth = 0f;
+    /// <summary>
     /// Current total time of object based on Timer.deltaTime additions
     /// </summary>
     float timer = 0f;
@@ -127,6 +140,13 @@ public class Physics : MonoBehaviour {
     /// <param name="_m">Mass to add.</param>
     public void addMass(float _m) {
         mass += _m;
+    }
+    /// <summary>
+    /// Removes mass to current mass.
+    /// </summary>
+    /// <param name="_m">Mass to subtract.</param>
+    public void subMass(float _m) {
+        mass -= _m;
     }
     /// <summary>
     /// Gets the mass of the object
@@ -245,12 +265,18 @@ public class Physics : MonoBehaviour {
     }
 
     void Start() {
-        calculateDragCoefficient();
+
     }
 
     void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
             stopped = !stopped;
+        }
+        if (Input.GetKeyDown(KeyCode.S)) {
+            addMass(10e6f);
+        }
+        if (Input.GetKeyDown(KeyCode.W)) {
+            subMass(10e6f);
         }
         // Add weight to boat
         sinkBoat();
@@ -259,7 +285,6 @@ public class Physics : MonoBehaviour {
 
     void FixedUpdate() {
         if (timer >= 12f) stopped = true;
-        else updateTimer(Time.deltaTime);
         if (!stopped) moveBoat(Time.deltaTime);
     }
 
@@ -422,26 +447,44 @@ public class Physics : MonoBehaviour {
 
     void sinkBoat() {
         float pf = 1000f;
-        float depth = mass / (this.transform.lossyScale.x * this.transform.lossyScale.z * pf);
+        depth = mass / (this.transform.lossyScale.x * this.transform.lossyScale.z * pf);
         this.transform.position = new Vector3(this.transform.position.x, (-depth), this.transform.position.z);
+        calculateDragCoefficient();
     }
 
     void moveBoat(float dt) {
-        distance = distance + ((thrust / dragCoefficient) * dt) + ((thrust - (dragCoefficient * velocity.x)) / dragCoefficient) * (mass / dragCoefficient) * (Mathf.Exp(((-dragCoefficient) * dt) / mass) - 1f);
-        this.transform.Translate(distance, 0f, 0f);
-        acceleration = new Vector3((thrust - (dragCoefficient * velocity.x) / mass), 0f, 0f);
-        float moveX = (1f / dragCoefficient) * (thrust - (Mathf.Exp((-1f * dragCoefficient * dt) / mass)) * (thrust - dragCoefficient * velocity.x));
+        float tct = (thrust / dragCoefficient) * dt;
+        float tcvc = (thrust - (dragCoefficient * velocity.x)) / dragCoefficient;
+        float mc = mass / dragCoefficient;
+        float ectm = Mathf.Exp(((-1f * dragCoefficient) * dt) / mass) - 1f;
+        Debug.Log("tct: " + tct);
+        Debug.Log("tcvc: " + tcvc);
+        Debug.Log("mc: " + mc);
+        Debug.Log("ectm: " + ectm);
+        distance = distance + tct + (tcvc * mc * ectm);
+        this.transform.position = new Vector3(distance, 0f, 0f);
+        acceleration = new Vector3(((thrust - dragCoefficient * velocity.x) / mass), 0f, 0f);
+        float moveX = ((thrust - (Mathf.Exp(((-1f * dragCoefficient) * dt) / mass)) * (thrust - dragCoefficient * velocity.x))) * (1f / dragCoefficient);
         velocity = new Vector3(moveX, 0f, 0f);
+        updateTimer(dt);
     }
 
     void calculateDragCoefficient() {
-            if (mass == 10000000f) dragCoefficient = (10000000f / 4f);
-            else if (mass == 20000000f) dragCoefficient = (20000000f / 4f);
-            else if (mass == 30000000f) dragCoefficient = (30000000f / 4f);
-            else if (mass == 40000000f) dragCoefficient = (40000000f / 4f);
+            if (mass == 10000000f) dragCoefficient = (10e6f / 4f);
+            else if (mass == 20000000f) dragCoefficient = (10e6f / 2f);
+            else if (mass == 30000000f) dragCoefficient = ((10e6f / 4f) + (10e6f / 2f));
+            else if (mass == 40000000f) dragCoefficient = 10e6f;
     }
 
     void updateText() {
-        
+        massText.text = "Ship Mass: " + mass + "kg";
+        depthText.text = "Depth: " + depth + "m";
+        dragText.text = "Drag: " + dragCoefficient;
+        tcText.text = "T/C: " + thrust/dragCoefficient + "m/s";
+        positionText.text = "Position: " + distance + "m";
+        velocityText.text = "Velocity: " + velocity.x + "m/s";
+        accelerationText.text = "Acceleration: " + acceleration.x + "m/s^2";
+        timeText.text = "Time: " + getTimer() + "s";
+        tauText.text = "Tau: " + mass/dragCoefficient + "s";
     }
 }

@@ -1,10 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Movement : MonoBehaviour {
-    // There is a better way to do this. Fix for the final
-    public Car car;
-    public Arrow arrow;
+public class Physics : MonoBehaviour {
     // Rotation and Movement
     /// <summary>
     /// Velocity of the object.
@@ -15,21 +12,22 @@ public class Movement : MonoBehaviour {
     /// </summary>
     public Vector3 acceleration = new Vector3(0f, 0f, 0f);
     /// <summary>
+    /// Mass of the object
+    /// </summary>
+    public float mass = 0f;
+    /// <summary>
     /// Radius of the object to be rotated (basically width)
     /// </summary>
     public float radius;
     /// <summary>
-    /// Force X of the object
+    /// Force Vector of the object
     /// </summary>
-    public float forceX = 0f;
+    public Vector3 force = new Vector3(0f, 0f, 0f);
     /// <summary>
-    /// Force Y of the object
+    /// Thrust to move the object (in water). Should remain constant for test 
+    /// purposes
     /// </summary>
-    public float forceY = 0f;
-    /// <summary>
-    /// Force Z of the object
-    /// </summary>
-    public float forceZ = 0f;
+    public float thrust = 10000000;
     /// <summary>
     /// Start or stop game movement
     /// </summary>
@@ -82,20 +80,17 @@ public class Movement : MonoBehaviour {
     /// </summary>
     float theta;
     /// <summary>
+    /// Drag coefficient. Used in boat project
+    /// </summary>
+    float dragCoefficient = 0f;
+    /// <summary>
+    /// Distance to move per frame. Used in boat project
+    /// </summary>
+    float distance = 0f;
+    /// <summary>
     /// Current total time of object based on Timer.deltaTime additions
     /// </summary>
     float timer = 0f;
-
-// Text
-
-    public Text ForceText, 
-                TimeText, 
-                vText, 
-                aText, 
-                thetaText, 
-                omegaText, 
-                alphaText,
-                radialText;
 
     /// <summary>
     /// Update the timer with the value passed in.
@@ -119,7 +114,27 @@ public class Movement : MonoBehaviour {
     public void resetTimer() {
         timer = 0f;
     }
-
+    /// <summary>
+    /// Sets the mass of the object
+    /// </summary>
+    /// <param name="_m">Mass to set too.</param>
+    public void setMass(float _m) {
+        mass = _m;
+    }
+    /// <summary>
+    /// Adds mass to current mass.
+    /// </summary>
+    /// <param name="_m">Mass to add.</param>
+    public void addMass(float _m) {
+        mass += _m;
+    }
+    /// <summary>
+    /// Gets the mass of the object
+    /// </summary>
+    /// <returns>Mass of the object.</returns>
+    public float getMass() {
+        return mass;
+    }
     /// <summary>
     /// Get the omega
     /// </summary>
@@ -178,7 +193,7 @@ public class Movement : MonoBehaviour {
     /// </summary>
     /// <param name="x">Force X</param>
     public void setForceX(float x) {
-        forceX = x;
+        force.x = x;
     }
 
     /// <summary>
@@ -186,7 +201,7 @@ public class Movement : MonoBehaviour {
     /// </summary>
     /// <param name="y">Force Y</param>
     public void setForceY(float y) {
-        forceY = y;
+        force.y = y;
     }
 
     /// <summary>
@@ -194,7 +209,7 @@ public class Movement : MonoBehaviour {
     /// </summary>
     /// <param name="z">Force Z</param>
     public void setForceZ(float z) {
-        forceZ = z;
+        force.z = z;
     }
 
     /// <summary>
@@ -230,38 +245,22 @@ public class Movement : MonoBehaviour {
     }
 
     void Start() {
-        initRotation(arrow, car);
+        calculateDragCoefficient();
     }
 
     void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
             stopped = !stopped;
         }
-        if (Input.GetKeyDown(KeyCode.A)) {
-            alphaBool = !alphaBool;
-        }
+        // Add weight to boat
+        sinkBoat();
         updateText();
     }
 
     void FixedUpdate() {
-        // Rotation loop
-        if (!stopped) {
-            rotateLoop(car);
-            moveObject(car);
-            updateTimer(Time.deltaTime);
-        }
-    }
-
-    // DEPRICATED
-    /// <summary>
-    /// Create Force Vector
-    /// </summary>
-    /// <param name="_fx">Force X for the vector</param>
-    /// <param name="_fy">Force Y for the vector</param>
-    /// <param name="_fz">Force Z for the vector</param>
-    /// <returns>Force Vector</returns>
-    Vector3 createForceVector(float _fx, float _fy, float _fz) {
-        return new Vector3(_fx, _fy, _fz);
+        if (timer >= 12f) stopped = true;
+        else updateTimer(Time.deltaTime);
+        if (!stopped) moveBoat(Time.deltaTime);
     }
 
     /// <summary>
@@ -376,20 +375,19 @@ public class Movement : MonoBehaviour {
     /// <summary>
     /// Initialize the Rotation values
     /// </summary>
-    public void initRotation(Arrow arrow, Car car) {
+    public void initCarRotation(Arrow arrow, Car car) {
         resetTheta();
         resetOmega();
         r = arrowToCOM(arrow.transform.position, car.COM);
-        F = new Vector3(forceX, forceY, forceZ);
         I = car.getInertiaCar();
-        alpha = (calculateAngularAcceleration(r, F, I));
+        alpha = (calculateAngularAcceleration(r, force, I));
         resetTimer();
     }
 
     /// <summary>
     /// Rotation loop of the object
     /// </summary>
-    public void rotateLoop(Car car) {
+    public void rotateCarLoop(Car car, Arrow arrow) {
         r = arrowToCOM(arrow.transform.position, car.COM);
         theta = calculateRotationAngle(thetao, previousOmega, alpha, timer);
         omega = calculateAngularVelocity(omega, alpha, Time.deltaTime);
@@ -407,12 +405,11 @@ public class Movement : MonoBehaviour {
         this.transform.RotateAround(car.COM, Vector3.forward, (omega.z * Mathf.Rad2Deg * Time.deltaTime));
         if (getTimer() >= 1.96f) stopAcceleration = true;
     }
-
     /// <summary>
     /// Move the car
     /// </summary>
     /// <param name="car">Car</param>
-    public void moveObject(Car _car) {
+    public void moveCarObject(Car _car) {
         if (getTimer() >= 7.96f) stopped = true;
         if (!stopAcceleration || !(getTimer() >= 2f)) {
             acceleration = calculateObjectAcceleration(F, _car.m);
@@ -423,15 +420,28 @@ public class Movement : MonoBehaviour {
         _car.transform.position += (velocity * Time.deltaTime);
     }
 
-    // DEPRICATED
+    void sinkBoat() {
+        float pf = 1000f;
+        float depth = mass / (this.transform.lossyScale.x * this.transform.lossyScale.z * pf);
+        this.transform.position = new Vector3(this.transform.position.x, (-depth), this.transform.position.z);
+    }
+
+    void moveBoat(float dt) {
+        distance = distance + ((thrust / dragCoefficient) * dt) + ((thrust - (dragCoefficient * velocity.x)) / dragCoefficient) * (mass / dragCoefficient) * (Mathf.Exp(((-dragCoefficient) * dt) / mass) - 1f);
+        this.transform.Translate(distance, 0f, 0f);
+        acceleration = new Vector3((thrust - (dragCoefficient * velocity.x) / mass), 0f, 0f);
+        float moveX = (1f / dragCoefficient) * (thrust - (Mathf.Exp((-1f * dragCoefficient * dt) / mass)) * (thrust - dragCoefficient * velocity.x));
+        velocity = new Vector3(moveX, 0f, 0f);
+    }
+
+    void calculateDragCoefficient() {
+            if (mass == 10000000f) dragCoefficient = (10000000f / 4f);
+            else if (mass == 20000000f) dragCoefficient = (20000000f / 4f);
+            else if (mass == 30000000f) dragCoefficient = (30000000f / 4f);
+            else if (mass == 40000000f) dragCoefficient = (40000000f / 4f);
+    }
+
     void updateText() {
-        ForceText.text = F.ToString() + " N";
-        TimeText.text = timer.ToString() + " sec";
-        vText.text = velocity.ToString() + " m/s";
-        aText.text = acceleration.ToString() + " m/s^2";
-        thetaText.text = theta + " rads";
-        omegaText.text = omega.ToString();
-        alphaText.text = alpha.ToString();
-        radialText.text = r.ToString();
+        
     }
 }

@@ -445,6 +445,9 @@ public class Physics : MonoBehaviour {
         _car.transform.position += (velocity * Time.deltaTime);
     }
 
+    /// <summary>
+    /// Sink the boat based on mass.
+    /// </summary>
     void sinkBoat() {
         float pf = 1000f;
         depth = mass / (this.transform.lossyScale.x * this.transform.lossyScale.z * pf);
@@ -452,15 +455,15 @@ public class Physics : MonoBehaviour {
         calculateDragCoefficient();
     }
 
+    /// <summary>
+    /// Move the boat in the water.
+    /// </summary>
+    /// <param name="dt">Delta time</param>
     void moveBoat(float dt) {
         float tct = (thrust / dragCoefficient) * dt;
         float tcvc = (thrust - (dragCoefficient * velocity.x)) / dragCoefficient;
         float mc = mass / dragCoefficient;
         float ectm = Mathf.Exp(((-1f * dragCoefficient) * dt) / mass) - 1f;
-        Debug.Log("tct: " + tct);
-        Debug.Log("tcvc: " + tcvc);
-        Debug.Log("mc: " + mc);
-        Debug.Log("ectm: " + ectm);
         distance = distance + tct + (tcvc * mc * ectm);
         this.transform.position = new Vector3(distance, 0f, 0f);
         acceleration = new Vector3(((thrust - dragCoefficient * velocity.x) / mass), 0f, 0f);
@@ -469,6 +472,9 @@ public class Physics : MonoBehaviour {
         updateTimer(dt);
     }
 
+    /// <summary>
+    /// Calculate the drag on the boat.
+    /// </summary>
     void calculateDragCoefficient() {
             if (mass == 10000000f) dragCoefficient = (10e6f / 4f);
             else if (mass == 20000000f) dragCoefficient = (10e6f / 2f);

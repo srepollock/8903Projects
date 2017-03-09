@@ -27,10 +27,12 @@ public class Physics : MonoBehaviour {
     /// Force Vector of the object
     /// </summary>
     public Vector3 force;
-	/// <summary>
-    /// Drag coefficient. Used in boat project
+    /// <summary>
+    /// Coefficient of Resitution (e).
+    /// 
+    /// Ranges from 0 <= e <= 1 (steps of 0.1)
     /// </summary>
-    public float dragCoefficient;
+    public float coefficientOfRestitution;
 #endregion
 #region Private Physics Variables
     /// <summary>
@@ -86,6 +88,9 @@ public class Physics : MonoBehaviour {
     /// Angular Velocity
     /// </summary>
     Vector3 omega;
+    /// <summary>
+    /// Previous omega. Used for updating.
+    /// </summary>
     Vector3 previousOmega = new Vector3(0f, 0f, 0f);
     /// <summary>
     /// Initial motion about the X axis of the object in 2D/3D particle 
@@ -130,6 +135,10 @@ public class Physics : MonoBehaviour {
     /// Depth of the object. Used in boat project
     /// </summary>
     float depth = 0f;
+    /// <summary>
+    /// Drag coefficient. Used in boat project
+    /// </summary>
+    public float dragCoefficient;
     /// <summary>
     /// Wind for kinematics
     /// </summary>
@@ -375,22 +384,19 @@ public class Physics : MonoBehaviour {
     }
 #endregion
     void Start() {
-        wind = new Vector3(0, 0, -10f);
-        windCoefficient = 0.1f;
-        dragCoefficient = 0.2f;
+        
     }
     void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
             stopped = !stopped;
         }
-        if (Input.GetKeyDown(KeyCode.L)) {
-            windanddrag = !windanddrag;
-        }
+        // Movement function called here
+
         updateText();
     }
     void FixedUpdate() {
         if (timer >= 12f) stopped = true;
-		moveProjectile3D(timer, Time.deltaTime);
+        // Movement function called here(?)
 		if (!stopped) updateTimer(Time.deltaTime);
     }
 
@@ -618,7 +624,6 @@ public class Physics : MonoBehaviour {
                     ((etT * vf.y) + ((etT - 1) * -gravity.y * tau)),
                     ((etT * vf.z) + ((etT - 1) * cwgdS))
                 ) * _dt;
-                Debug.Log("Velocity final: " + vf);
                 this.transform.Translate(vf);
             }
             else {

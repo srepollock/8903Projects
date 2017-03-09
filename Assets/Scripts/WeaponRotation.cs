@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class WeaponRotation : MonoBehaviour {
 
-	public Projectile projectile;
+	public Physics projectile;
 	public TargetPosition target;
 	public Text rangex, rangey, rangez, correctGunAngle, currentGunAngle, alphaText, gammaText;
 
@@ -67,9 +67,9 @@ public class WeaponRotation : MonoBehaviour {
 			this.transform.right).ToString();
 	}
 
-	void updateProjectile(Projectile _p, float angle)
+	void updateProjectile(Physics _p, float angle)
 	{
-		_p.angle = angle;
+		_p.setTheta(angle);
 	}
 
 	/// <summary>
@@ -78,19 +78,19 @@ public class WeaponRotation : MonoBehaviour {
 	/// <param name="_p">Projectile object</param>
 	/// <param name="_a">Alpha angle</param>
 	/// <param name="_g">Gamma angle</param>
-	void updateProjectileAG(Projectile _p, float _a, float _g)
+	void updateProjectileAG(Physics _p, float _a, float _g)
 	{
-		_p.alpha = _a;
-		_p.gamma = _g;
+		_p.setAlpha(new Vector3(_a, 0f, 0f));
+		_p.setGamma(new Vector3(0f, 0f, _g));
 	}
 
-	float correctAngle(TargetPosition _t, Projectile _p)
+	float correctAngle(TargetPosition _t, Physics _p)
 	{
 		float 	distance, 
 				velocity, 
 				theta;
 		distance = _t.transform.position.x - this.transform.position.x;
-		velocity = _p.initialVelocity;
+		velocity = _p.velocity.x;
 		theta = (Mathf.Asin((gravity * distance) / Mathf.Pow(velocity, 2f)) / 2f);
 		theta = theta * Mathf.Rad2Deg;
 		return theta;

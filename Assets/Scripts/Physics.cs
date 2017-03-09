@@ -451,7 +451,6 @@ public class Physics : MonoBehaviour {
 //         alpha = (calculateAngularAcceleration(r, force, I));
 //         resetTimer();
 //     }
-
 // DEPRICATED
     // /// <summary>
     // /// Rotation loop of the object
@@ -533,18 +532,14 @@ public class Physics : MonoBehaviour {
 	/// <param name="_dt">Delta time</param>
 	void moveProjectile3D(float _t, float _dt) {
 		if (!stopped) {
-			Debug.Log("Running");
 			Vector3 radAlpha = Mathf.Deg2Rad * alpha,
 					radGamma = Mathf.Deg2Rad * gamma;
-			Debug.Log("Alpha: " + alpha);
-			Debug.Log("Gamma: " + gamma);
-			velocity = new Vector3(
+			Vector3 vf = new Vector3(
 				(velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
 				(velocity.y * Mathf.Cos(radAlpha.x) + (gravity.y * _t)),
 				(velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
 			) * _dt;
-			Debug.Log("Velocity: " + velocity);
-			this.transform.Translate(velocity);
+			this.transform.Translate(vf);
 		}
 	}
 

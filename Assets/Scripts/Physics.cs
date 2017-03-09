@@ -34,6 +34,10 @@ public class Physics : MonoBehaviour {
 #endregion
 #region Private Physics Variables
     /// <summary>
+    /// Current total time of object based on Timer.deltaTime additions
+    /// </summary>
+    float timer = 0f;
+    /// <summary>
     /// Thrust to move the object (in water). Should remain constant for test 
     /// purposes
     /// </summary>
@@ -53,7 +57,7 @@ public class Physics : MonoBehaviour {
 	/// <summary>
 	/// Boolean for turning wind resistance on or off.
 	/// </summary>
-	bool windResistance = false;
+	bool windanddrag = false;
     /// <summary>
     /// Object Velocity
     /// </summary>
@@ -127,14 +131,24 @@ public class Physics : MonoBehaviour {
     /// </summary>
     float depth = 0f;
     /// <summary>
-    /// Current total time of object based on Timer.deltaTime additions
+    /// Wind for kinematics
     /// </summary>
-    float timer = 0f;
+    Vector3 wind; // 0f, 0f, -10f
+    /// <summary>
+    /// Wind coefficient
+    /// </summary>
+    float windCoefficient; // 0.1N/(m/s)
+    /// <summary>
+    /// Tau of the object. Mass/DragCoefficient
+    /// </summary>
+    float tau;
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
 	public Text velocityText;
+    public Text positionText;
     public Text timeText;
+    public Text windanddragText;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -315,13 +329,62 @@ public class Physics : MonoBehaviour {
     public Vector3 getRadialVector() {
         return r;
     }
+    /// <summary>
+    /// Set the drag coefficient for the object.
+    /// </summary>
+    /// <param name="_d">Drag to set to</param>
+    public void setDragCoefficient(float _d) {
+        dragCoefficient = _d;
+    }
+    /// <summary>
+    /// Get the drag coefficient.
+    /// </summary>
+    /// <returns>Drag coefficient of the object.</returns>
+    public float getDragCoefficient() {
+        return dragCoefficient;
+    }
+    /// <summary>
+    /// Set the wind coefficient.
+    /// </summary>
+    /// <param name="_w">Wind to set to</param>
+    public void setWindCoefficient(float _w) {
+        windCoefficient = _w;
+    }
+    /// <summary>
+    /// Get the wind coefficient.
+    /// </summary>
+    /// <returns>Wind coefficient of the object.</returns>
+    public float getWindCoefficient() {
+        return windCoefficient;
+    }
+    /// <summary>
+    /// Set the direciton of the wind. 
+    /// 
+    /// Default for us (0, 0, -10)
+    /// </summary>
+    /// <param name="_w">Direction to set the wind to.</param>
+    public void setWindDirection(Vector3 _w) {
+        wind = _w;
+    }
+    /// <summary>
+    /// Get the direciton of the wind.
+    /// </summary>
+    /// <returns>Vector3 wind</returns>
+    public Vector3 getWindDirection() {
+        return wind;
+    }
 #endregion
     void Start() {
-
+        wind = new Vector3(0, 0, -10f);
+        windCoefficient = 0.1f;
+        dragCoefficient = 0.2f;
     }
     void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
             stopped = !stopped;
+        }
+        if (Input.GetKeyDown(KeyCode.L)) {
+            windanddrag = !windanddrag;
         }
         updateText();
     }
@@ -533,22 +596,82 @@ public class Physics : MonoBehaviour {
 	/// <param name="_dt">Delta time</param>
 	void moveProjectile3D(float _t, float _dt) {
 		if (!stopped) {
-            Debug.Log("Running");
-			Vector3 radAlpha = Mathf.Deg2Rad * alpha,
-					radGamma = Mathf.Deg2Rad * gamma;
-			Vector3 vf = new Vector3(
-				(velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
-				(velocity.y * Mathf.Cos(radAlpha.x) + (gravity.y * _t)),
-				(velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
-			) * _dt;
-			this.transform.Translate(vf);
+            if (windanddrag) {
+                tau = calculateTau(mass, dragCoefficient);
+                Vector3 radAlpha = Mathf.Deg2Rad * alpha,
+                        radGamma = Mathf.Deg2Rad * gamma;
+                float   cwgdC = windOverDragCos(windCoefficient, wind, radGamma, dragCoefficient),
+                        cwgdS = windOverDragSin(windCoefficient, wind, radGamma, dragCoefficient);
+                float etT = Mathf.Exp(-_t/tau);
+                // Vector3 vf = new Vector3(
+                //     (0 + (velocity.x * tau * etT + (cwgdC * tau * etT) - (cwgdC * _t))),
+                //     (0 + (velocity.y * tau * etT + (gravity.y * Mathf.Pow(tau, 2f) * etT) - (gravity.y * tau * _t))),
+                //     (0 + (velocity.z * tau * etT + (cwgdS * tau * etT) - (cwgdS * _t)))
+                // ) * _dt;
+                Vector3 vf = new Vector3(
+                    (velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
+                    (velocity.y * Mathf.Cos(radAlpha.x)),
+                    (velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
+                );
+                vf = new Vector3(
+                    ((etT * vf.x) + ((etT - 1) * cwgdC)),
+                    ((etT * vf.y) + ((etT - 1) * -gravity.y * tau)),
+                    ((etT * vf.z) + ((etT - 1) * cwgdS))
+                ) * _dt;
+                Debug.Log("Velocity final: " + vf);
+                this.transform.Translate(vf);
+            }
+            else {
+                Vector3 radAlpha = Mathf.Deg2Rad * alpha,
+                        radGamma = Mathf.Deg2Rad * gamma;
+                Vector3 vf = new Vector3(
+                    (velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
+                    (velocity.y * Mathf.Cos(radAlpha.x) + (gravity.y * _t)),
+                    (velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
+                ) * _dt;
+                this.transform.Translate(vf);
+            }
 		}
 	}
 
+    /// <summary>
+    /// Caculate Tau of the object.
+    /// </summary>
+    /// <param name="_m">Mass of the object</param>
+    /// <param name="_dC">Drag Coefficient of the object.</param>
+    /// <returns>Tau</returns>
+    float calculateTau(float _m, float _dC) {
+        return _m/_dC;
+    }
+
+    /// <summary>
+    /// Returns wind coefficient over drag coefficient. Cos function
+    /// </summary>
+    /// <param name="_wC">Wind Coefficient</param>
+    /// <param name="wind">Wind strength (stored in wind.z)</param>
+    /// <param name="_g">Gamma</param>
+    /// <param name="_dC">Drag Coefficient</param>
+    /// <returns>Results</returns>
+    float windOverDragCos(float _wC, Vector3 wind, Vector3 _g, float _dC) {
+        return (_wC * wind.z * Mathf.Cos(_g.z)) / _dC;
+    }
+    /// <summary>
+    /// Returns wind coefficient over drag coefficient. Sin function
+    /// </summary>
+    /// <param name="_wC">Wind Coefficient</param>
+    /// <param name="wind">Wind strength (stored in wind.z)</param>
+    /// <param name="_g">Gamma</param>
+    /// <param name="_dC">Drag Coefficient</param>
+    /// <returns>Results</returns>
+    float windOverDragSin(float _wC, Vector3 wind, Vector3 _g, float _dC) {
+        return (_wC * wind.z * Mathf.Sin(_g.z)) / _dC;
+    }
 	/// <summary>
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>
     void updateText() {
         timeText.text = getTimer() + " s";
+        windanddragText.text = "Wind and Drag set: " + windanddrag.ToString();
+        positionText.text = this.transform.position.ToString();
     }
 }

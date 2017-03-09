@@ -134,6 +134,7 @@ public class Physics : MonoBehaviour {
 #region UI Text Variables
 	// End all with `...Text` for simplicity
 	public Text velocityText;
+    public Text timeText;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -327,7 +328,7 @@ public class Physics : MonoBehaviour {
     void FixedUpdate() {
         if (timer >= 12f) stopped = true;
 		moveProjectile3D(timer, Time.deltaTime);
-		updateTimer(Time.deltaTime);
+		if (!stopped) updateTimer(Time.deltaTime);
     }
 
     /// <summary>
@@ -532,6 +533,7 @@ public class Physics : MonoBehaviour {
 	/// <param name="_dt">Delta time</param>
 	void moveProjectile3D(float _t, float _dt) {
 		if (!stopped) {
+            Debug.Log("Running");
 			Vector3 radAlpha = Mathf.Deg2Rad * alpha,
 					radGamma = Mathf.Deg2Rad * gamma;
 			Vector3 vf = new Vector3(
@@ -547,6 +549,6 @@ public class Physics : MonoBehaviour {
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>
     void updateText() {
-
+        timeText.text = getTimer() + " s";
     }
 }

@@ -55,10 +55,10 @@ public class WeaponRotation : MonoBehaviour {
 				//projectile.rotate(this.transform.rotation);
 			}
 		}
-		if (Input.GetKeyDown(KeyCode.Space))
-		{
-			canMove = !canMove;
-		}
+		// if (Input.GetKeyDown(KeyCode.Space))
+		// {
+		// 	canMove = !canMove;
+		// }
 	}
 
 	void updateAngle()

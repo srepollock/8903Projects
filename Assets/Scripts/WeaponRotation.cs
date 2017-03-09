@@ -23,6 +23,7 @@ public class WeaponRotation : MonoBehaviour {
 		//updateProjectile(projectile, angle);
 		//updateText();
 		updateProjectileAG(projectile, alphaAngleCalc(), gammaAngleCalc());
+		updateCorrectAngle();
 		updateText();
 	}
 
@@ -90,9 +91,9 @@ public class WeaponRotation : MonoBehaviour {
 				velocity, 
 				theta;
 		distance = _t.transform.position.x - this.transform.position.x;
-		velocity = _p.velocity.x;
+		velocity = _p.velocitySpeed;
 		theta = (Mathf.Asin((gravity * distance) / Mathf.Pow(velocity, 2f)) / 2f);
-		theta = theta * Mathf.Rad2Deg;
+		theta = 90 - (theta * Mathf.Rad2Deg);
 		return theta;
 	}
 

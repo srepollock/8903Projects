@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 
 public class Physics : MonoBehaviour {
+    public float velocitySpeed;
 #region Public Physics Variabls
     /// <summary>
     /// Velocity of the object.
@@ -604,30 +605,35 @@ public class Physics : MonoBehaviour {
                         cwgdS = windOverDragSin(windCoefficient, wind, radGamma, dragCoefficient);
                 float etT = Mathf.Exp(-_t/tau);
                 // Vector3 vf = new Vector3(
-                //     (0 + (velocity.x * tau * etT + (cwgdC * tau * etT) - (cwgdC * _t))),
-                //     (0 + (velocity.y * tau * etT + (gravity.y * Mathf.Pow(tau, 2f) * etT) - (gravity.y * tau * _t))),
-                //     (0 + (velocity.z * tau * etT + (cwgdS * tau * etT) - (cwgdS * _t)))
+                    // (0 + (velocity.x * tau * etT + (cwgdC * tau * etT) - (cwgdC * _t))),
+                    // (0 + (velocity.y * tau * etT + (gravity.y * Mathf.Pow(tau, 2f) * etT) - (gravity.y * tau * _t))),
+                    // (0 + (velocity.z * tau * etT + (cwgdS * tau * etT) - (cwgdS * _t)))
                 // ) * _dt;
                 Vector3 vf = new Vector3(
-                    (velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
-                    (velocity.y * Mathf.Cos(radAlpha.x)),
-                    (velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
+                    (velocitySpeed * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
+                    (velocitySpeed * Mathf.Cos(radAlpha.x)),
+                    (velocitySpeed * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
                 );
                 vf = new Vector3(
                     ((etT * vf.x) + ((etT - 1) * cwgdC)),
-                    ((etT * vf.y) + ((etT - 1) * -gravity.y * tau)),
+                    ((etT * vf.y) + ((etT - 1) * gravity.y * tau)),
                     ((etT * vf.z) + ((etT - 1) * cwgdS))
                 ) * _dt;
                 Debug.Log("Velocity final: " + vf);
-                this.transform.Translate(vf);
+                this.transform.position = new Vector3(
+                    (0 + (vf.x * tau * (1 - etT) + (cwgdC * tau * (1 - etT)) - (cwgdC * _t))),
+                    (0 + (vf.y * tau * (1 - etT) + (gravity.y * Mathf.Pow(tau, 2f) * (1 - etT)) - (gravity.y * tau * _t))),
+                    (0 + (vf.z * tau * (1 - etT) + (cwgdS * tau * (1 - etT)) - (cwgdS * _t)))
+                );
+                velocityText.text = vf.ToString();
             }
             else {
                 Vector3 radAlpha = Mathf.Deg2Rad * alpha,
                         radGamma = Mathf.Deg2Rad * gamma;
                 Vector3 vf = new Vector3(
-                    (velocity.x * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
-                    (velocity.y * Mathf.Cos(radAlpha.x) + (gravity.y * _t)),
-                    (velocity.z * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
+                    (velocitySpeed * Mathf.Sin(radAlpha.x) * Mathf.Cos(radGamma.z)),
+                    (velocitySpeed * Mathf.Cos(radAlpha.x) + (-gravity.y * _t)),
+                    (velocitySpeed * Mathf.Sin(radAlpha.x) * Mathf.Sin(radGamma.z) * -1)
                 ) * _dt;
                 this.transform.Translate(vf);
             }
@@ -674,4 +680,17 @@ public class Physics : MonoBehaviour {
         windanddragText.text = "Wind and Drag set: " + windanddrag.ToString();
         positionText.text = this.transform.position.ToString();
     }
+
+    void OnTriggerEnter(Collider col)
+	{
+		Debug.Log("Collision: " + col.gameObject.name);
+		if (col.gameObject.name == "Center")
+		{
+			stopped = true;
+			//col.gameObject.GetComponent<ParticleSystem>().enableEmission = true;
+		}
+        if (col.gameObject.name == "FlatPlane") {
+            stopped = true;
+        }
+	}
 }

@@ -28,7 +28,7 @@ public class Projectile : MonoBehaviour {
 	/// Gamma angle (3D).
 	/// </summary>
 	public float gamma = 0;
-    public Text projectilex, projectiley, projectilez, velocityText, timeText;
+    public Text projectilex, projectiley, projectilez, velocityText, timeText, correctAlphaText, correctGammaText;
     /// <summary>
     /// Drag or wind resistance on the object.
     /// </summary>
@@ -57,6 +57,7 @@ public class Projectile : MonoBehaviour {
 			move3D(timer, dtime);
 			//if (this.transform.position.y < 0.001) stopped = true;
 		}
+		updateCorrect();
 		UpdateTimeText(timer);
 		UpdateVelocityText(speed);
 		UpdatePositionText();
@@ -123,6 +124,11 @@ public class Projectile : MonoBehaviour {
 	void UpdateVelocityText (float v) 
     {
 		velocityText.text = v + " m/s^2";
+	}
+
+	void updateCorrect() {
+		correctAlphaText.text = "";
+		correctGammaText.text = "";
 	}
 
 	void resetPosition()

@@ -2,11 +2,21 @@
 using UnityEngine.UI;
 
 public class Physics : MonoBehaviour {
+#region Public Object Connections - Variable per Project
+    /// <summary>
+    /// Collision Object for Project 9
+    /// </summary>
+    public CollisionObject col;
+#endregion
 #region Public Physics Variabls
     /// <summary>
     /// Velocity of the object.
     /// </summary>
     public Vector3 velocity;
+    /// <summary>
+    /// Initial Velocity of the object. Set in <see cref="Start()"/>.
+    /// </summary>
+    public Vector3 velocityInitial;
     /// <summary>
     /// Acceleration of the object.
     /// </summary>
@@ -387,8 +397,12 @@ public class Physics : MonoBehaviour {
         
     }
     void Update() {
+        // Input Functions
         if (Input.GetKeyDown(KeyCode.Space)) {
             stopped = !stopped;
+        }
+        if (Input.GetKeyDown(KeyCode.Backspace)) {
+            this.resetPosition();
         }
         // Movement function called here
 
@@ -594,7 +608,34 @@ public class Physics : MonoBehaviour {
             else if (mass == 30000000f) dragCoefficient = ((10e6f / 4f) + (10e6f / 2f));
             else if (mass == 40000000f) dragCoefficient = 10e6f;
     }
+    /// <summary>
+    /// Resets the position of the object.
+    ///
+    /// Different for each project.
+    /// </summary>
+    void resetPosition() {
+        if (this.name == "Object1") {
+            this.transform.position = new Vector3(-380.0f, 0.0f, 0.0f);
+        }
+        if (this.name == "Object2") {
+            this.transform.position = new Vector3(380.0f, 0.0f, 0.0f);
+        }
+        this.velocity = Vector3.zero;
+        this.resetTimer();
+    }
 
+    void collisionResponse(CollisionObject col) {
+        Vector3 J = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
+        Vector3 uf = new Vector3(((J.x/this.mass) + this.velocity.x), ((J.y/this.mass) + this.velocity.y), ((J.z/this.mass) + this.velocity.z));
+        Vector3 vf = new Vector3(((-J.x/col.mass) + col.velocity.x), ((J.y/col.mass) + col.velocity.y), ((J.z/col.mass) + col.velocity.z));
+        if (this.name == "Object1") {
+            
+        }
+        if (this.name == "Object2") {
+            
+        }
+    }
+#region Not Working. //TODO Fix Wind Drag
 	/// <summary>
 	/// Move projectile in a 3D space.
 	/// </summary>
@@ -638,7 +679,6 @@ public class Physics : MonoBehaviour {
             }
 		}
 	}
-
     /// <summary>
     /// Caculate Tau of the object.
     /// </summary>
@@ -648,7 +688,6 @@ public class Physics : MonoBehaviour {
     float calculateTau(float _m, float _dC) {
         return _m/_dC;
     }
-
     /// <summary>
     /// Returns wind coefficient over drag coefficient. Cos function
     /// </summary>
@@ -671,6 +710,7 @@ public class Physics : MonoBehaviour {
     float windOverDragSin(float _wC, Vector3 wind, Vector3 _g, float _dC) {
         return (_wC * wind.z * Mathf.Sin(_g.z)) / _dC;
     }
+#endregion
 	/// <summary>
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>

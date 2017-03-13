@@ -161,13 +161,33 @@ public class Physics : MonoBehaviour {
     /// Tau of the object. Mass/DragCoefficient
     /// </summary>
     float tau;
+    /// <summary>
+    /// Boolean for checking only the first collision.
+    /// </summary>
+    bool haveCollided = false;
+    /// <summary>
+    /// Used in Project 9: Collision.
+    /// </summary>
+    Vector3 J;
+    /// <summary>
+    /// Collison count used in PRoject 9. Should be only 1.
+    /// </summary>
+    int collisionCount = 0;
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
-	public Text velocityText;
-    public Text positionText;
-    public Text timeText;
-    public Text windanddragText;
+	public Text mass1Text,
+                mass2Text,
+                initialUText,
+                initialVText,
+                finalUText,
+                finalVText,
+                eText,
+                impulseJText,
+                collisionText,
+                collisionCountText,
+                p_iText,
+                P_fText;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -189,6 +209,20 @@ public class Physics : MonoBehaviour {
     /// </summary>
     public void resetTimer() {
         timer = 0f;
+    }
+    /// <summary>
+    /// Set the stopped boolean for running.
+    /// </summary>
+    /// <param name="_stopped">True/False</param>
+    public void setStopped(bool _stopped) {
+        stopped = _stopped;
+    }
+    /// <summary>
+    /// Return if the object is stopped or not.
+    /// </summary>
+    /// <returns>Running/Stopped</returns>
+    public bool getStopped() {
+        return stopped;
     }
     /// <summary>
     /// Sets the mass of the object
@@ -394,7 +428,7 @@ public class Physics : MonoBehaviour {
     }
 #endregion
     void Start() {
-        
+        velocity = velocityInitial;
     }
     void Update() {
         // Input Functions
@@ -402,15 +436,20 @@ public class Physics : MonoBehaviour {
             stopped = !stopped;
         }
         if (Input.GetKeyDown(KeyCode.Backspace)) {
+            stopped = true;
             this.resetPosition();
         }
         // Movement function called here
-
+        if (!stopped) {
+            this.transform.Translate(velocity * Time.deltaTime);
+        }
         updateText();
     }
     void FixedUpdate() {
         if (timer >= 12f) stopped = true;
         // Movement function called here(?)
+
+
 		if (!stopped) updateTimer(Time.deltaTime);
     }
 
@@ -614,25 +653,39 @@ public class Physics : MonoBehaviour {
     /// Different for each project.
     /// </summary>
     void resetPosition() {
-        if (this.name == "Object1") {
-            this.transform.position = new Vector3(-380.0f, 0.0f, 0.0f);
-        }
-        if (this.name == "Object2") {
-            this.transform.position = new Vector3(380.0f, 0.0f, 0.0f);
-        }
-        this.velocity = Vector3.zero;
+        this.transform.position = new Vector3(-380.0f, 0.0f, 0.0f);
+        col.transform.position = new Vector3(80.0f, 0.0f, 0.0f);
+        this.velocity = this.velocityInitial;
+        col.velocity = Vector3.zero;
+        this.J = Vector3.zero;
+        collisionCount = 0;
+        haveCollided = false;
         this.resetTimer();
     }
 
+    /// <summary>
+    /// First collision response of two objects.
+    /// </summary>
+    /// <param name="col">Collision object</param>
     void collisionResponse(CollisionObject col) {
-        Vector3 J = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
+        J = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
         Vector3 uf = new Vector3(((J.x/this.mass) + this.velocity.x), ((J.y/this.mass) + this.velocity.y), ((J.z/this.mass) + this.velocity.z));
         Vector3 vf = new Vector3(((-J.x/col.mass) + col.velocity.x), ((J.y/col.mass) + col.velocity.y), ((J.z/col.mass) + col.velocity.z));
-        if (this.name == "Object1") {
-            
+        if (haveCollided) {
+            collisionCount++;
+            if (this.name == "Object1") {
+                this.velocity = uf;
+            }
+            if (col.name == "Object2") {
+                col.velocity = vf;
+            }
         }
-        if (this.name == "Object2") {
-            
+    }
+
+    void OnTriggerEnter(Collider collider) {
+        if (collider.name == "Object2" && collider.GetComponent<CollisionObject>() != null) {
+            haveCollided = true;
+            collisionResponse(collider.GetComponent<CollisionObject>());
         }
     }
 #region Not Working. //TODO Fix Wind Drag
@@ -715,8 +768,17 @@ public class Physics : MonoBehaviour {
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>
     void updateText() {
-        timeText.text = getTimer() + " s";
-        windanddragText.text = "Wind and Drag set: " + windanddrag.ToString();
-        positionText.text = this.transform.position.ToString();
+        mass1Text.text = "M1 = " + this.mass + " kg.";
+        mass2Text.text = "M2 = " + col.mass + " kg.";
+        initialUText.text = "Initial u = " + this.velocityInitial.ToString() + " m/s";
+        initialVText.text = "v = " + col.velocityInitial.ToString() + " m/s (vfbg)";
+        finalUText.text = "Final u = " + this.velocity.ToString() + " m/s";
+        finalVText.text = "v = " + col.velocity.ToString() + " m/s";
+        eText.text = "e = " + this.coefficientOfRestitution + " (ed)";
+        impulseJText.text = "J = " + this.J.ToString() + " kg m/s";
+        collisionText.text = "First collision = " + haveCollided;
+        collisionCountText.text = "Collision Count = " + collisionCount;
+        p_iText.text = "p_i = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
+        P_fText.text = "p_f = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
     }
 }

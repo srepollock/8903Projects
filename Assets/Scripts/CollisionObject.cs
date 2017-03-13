@@ -2,6 +2,7 @@
 
 public class CollisionObject : MonoBehaviour {
 
+	public Physics physics;
 	public float mass;
 	public Vector3 velocityInitial;
 	public Vector3 velocity;
@@ -13,6 +14,8 @@ public class CollisionObject : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if (!physics.getStopped()) {
+			this.transform.Translate(velocity * Time.deltaTime);
+		}
 	}
 }

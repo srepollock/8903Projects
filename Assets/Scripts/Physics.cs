@@ -672,6 +672,8 @@ public class Physics : MonoBehaviour {
         Vector3 uf = new Vector3(((J.x/this.mass) + this.velocity.x), ((J.y/this.mass) + this.velocity.y), ((J.z/this.mass) + this.velocity.z));
         Vector3 vf = new Vector3(((-J.x/col.mass) + col.velocity.x), ((J.y/col.mass) + col.velocity.y), ((J.z/col.mass) + col.velocity.z));
         if (haveCollided) {
+            Debug.Log("Collision called");
+            haveCollided = false;
             collisionCount++;
             if (this.name == "Object1") {
                 this.velocity = uf;
@@ -684,7 +686,7 @@ public class Physics : MonoBehaviour {
 
     void OnTriggerEnter(Collider collider) {
         if (collider.name == "Object2" && collider.GetComponent<CollisionObject>() != null) {
-            haveCollided = true;
+            if (collisionCount <= 0) haveCollided = true;
             collisionResponse(collider.GetComponent<CollisionObject>());
         }
     }

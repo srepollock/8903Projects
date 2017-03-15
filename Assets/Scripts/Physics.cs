@@ -168,7 +168,7 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Used in Project 9: Collision.
     /// </summary>
-    Vector3 J;
+    float J;
     /// <summary>
     /// Collison count used in PRoject 9. Should be only 1.
     /// </summary>
@@ -439,6 +439,56 @@ public class Physics : MonoBehaviour {
             stopped = true;
             this.resetPosition();
         }
+        if (Input.GetKeyDown(KeyCode.P)) {
+            if (!(coefficientOfRestitution >= 1.0)) coefficientOfRestitution += 0.1f;
+        }
+        if (Input.GetKeyDown(KeyCode.Semicolon)) {
+            if (!(coefficientOfRestitution <= 0.0f)) coefficientOfRestitution -= 0.1f;
+        }
+        // Object 2 Mass
+        if (Input.GetKeyDown(KeyCode.O)) {
+            if (!(col.mass >= 10f)) col.mass += 1f;
+        }
+        if (Input.GetKeyDown(KeyCode.L)) {
+            if (!(col.mass <= 1f)) col.mass -= 1f;
+        }
+        // Object 1 Mass
+        if (Input.GetKeyDown(KeyCode.I)) {
+            if (!(this.mass >= 10f)) addMass(1f);
+        }
+        if (Input.GetKeyDown(KeyCode.K)) {
+            if (!(this.mass <= 1f)) subMass(1f);
+        }
+        if (Input.GetKeyDown(KeyCode.X)) {
+            if (!(this.velocityInitial.x >= 150f)) {
+                this.velocityInitial.x += 10f;
+                this.velocity.x += 10f;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Z)) {
+            if (!(this.velocityInitial.x <= 50f)) {
+                this.velocityInitial.x -= 10f; 
+                this.velocity.x -= 10f;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.V)) {
+            if (!(col.velocityInitial.x >= 50f)) {
+                col.velocityInitial.x += 10f;
+                col.velocity.x += 10f;
+            } 
+        }
+        if (Input.GetKeyDown(KeyCode.C)) {
+            if (!(col.velocityInitial.x <= -50f)) {
+                col.velocityInitial.x -= 10f; 
+                col.velocity.x -= 10f;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.R)) {
+            if (!(this.coefficientOfRestitution >= 1f)) this.coefficientOfRestitution += 0.1f; 
+        }
+        if (Input.GetKeyDown(KeyCode.E)) {
+            if (!(this.coefficientOfRestitution <= 0f)) this.coefficientOfRestitution -= 0.1f; 
+        }
         // Movement function called here
         if (!stopped) {
             this.transform.Translate(velocity * Time.deltaTime);
@@ -654,10 +704,10 @@ public class Physics : MonoBehaviour {
     /// </summary>
     void resetPosition() {
         this.transform.position = new Vector3(-380.0f, 0.0f, 0.0f);
-        col.transform.position = new Vector3(80.0f, 0.0f, 0.0f);
+        col.transform.position = new Vector3(80.0f, 30.0f, 0.0f);
         this.velocity = this.velocityInitial;
         col.velocity = Vector3.zero;
-        this.J = Vector3.zero;
+        this.J = 0.0f;
         collisionCount = 0;
         haveCollided = false;
         this.resetTimer();
@@ -668,9 +718,9 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponse(CollisionObject col) {
-        J = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
-        Vector3 uf = new Vector3(((J.x/this.mass) + this.velocity.x), ((J.y/this.mass) + this.velocity.y), ((J.z/this.mass) + this.velocity.z));
-        Vector3 vf = new Vector3(((-J.x/col.mass) + col.velocity.x), ((J.y/col.mass) + col.velocity.y), ((J.z/col.mass) + col.velocity.z));
+        Vector3 Jj = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
+        Vector3 uf = new Vector3(((Jj.x/this.mass) + this.velocity.x), ((Jj.y/this.mass) + this.velocity.y), ((Jj.z/this.mass) + this.velocity.z));
+        Vector3 vf = new Vector3(((-Jj.x/col.mass) + col.velocity.x), ((Jj.y/col.mass) + col.velocity.y), ((Jj.z/col.mass) + col.velocity.z));
         if (haveCollided) {
             haveCollided = false;
             collisionCount++;
@@ -688,19 +738,31 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponse2D(CollisionObject col) {
-        Vector3 vrn = (this.velocityInitial.normalized - col.velocityInitial.normalized).normalized;
-        J = ((-1.0f * vrn) * (coefficientOfRestitution + 1))
-        // J = -1f * (this.velocityInitial - col.velocityInitial) * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
-        // Vector3 uf = new Vector3(((J.x/this.mass) + this.velocity.x), ((J.y/this.mass) + this.velocity.y), ((J.z/this.mass) + this.velocity.z));
-        // Vector3 vf = new Vector3(((-J.x/col.mass) + col.velocity.x), ((J.y/col.mass) + col.velocity.y), ((J.z/col.mass) + col.velocity.z));
+        Vector3 normal = (col.transform.position - this.transform.position);
+        Vector3 normalHat = normal.normalized;
+        float uin = Vector3.Dot(this.velocityInitial, normalHat);
+        float vin = Vector3.Dot(col.velocityInitial, normalHat);
+        float vrn = (uin - vin);
+        Vector3 vrnn = (uin - vin) * normalHat;
+        Vector3 tVector = Vector3.Cross(Vector3.Cross(normalHat, this.velocityInitial), normalHat);
+        Vector3 tHat = tVector.normalized;
+        float uit = Vector3.Dot(this.velocityInitial, tHat);
+        float vit = Vector3.Dot(col.velocityInitial, tHat);
+        J = -vrn * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
+        Vector3 Jn = -vrnn * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
+        Vector3 ufn = new Vector3((Jn.x / this.mass) + uin * normalHat.x, (Jn.y / this.mass) + uin * normalHat.y, 0.0f);
+        Vector3 vfn = new Vector3((Jn.x / col.mass) + vin * normalHat.x, (Jn.y / col.mass) + vin * normalHat.y, 0.0f);
+        Vector3 uf = new Vector3(ufn.x + uit * tHat.x, ufn.y + uit * tHat.y, 0.0f);
+        Vector3 vf = new Vector3(vfn.x + vit * tHat.x, vfn.y + vit * tHat.y, 0.0f);
         if (haveCollided) {
+            Debug.Log("Colliding");
             haveCollided = false;
             collisionCount++;
             if (this.name == "Object1") {
                 this.velocity = uf;
             }
             if (col.name == "Object2") {
-                col.velocity = vf;
+                col.velocity = -vf;
             }
         }
     }
@@ -708,7 +770,7 @@ public class Physics : MonoBehaviour {
     void OnTriggerEnter(Collider collider) {
         if (collider.name == "Object2" && collider.GetComponent<CollisionObject>() != null) {
             if (collisionCount <= 0) haveCollided = true; // Was hitting twice
-            collisionResponse(collider.GetComponent<CollisionObject>());
+            collisionResponse2D(collider.GetComponent<CollisionObject>());
         }
     }
 #region Not Working. //TODO Fix Wind Drag

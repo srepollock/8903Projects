@@ -696,8 +696,8 @@ public class Physics : MonoBehaviour {
     /// Different for each project.
     /// </summary>
     void resetPosition() {
-        this.transform.position = new Vector3(-380.0f, 370.0f, 0.0f);
-        col.transform.position = new Vector3(80.0f, 400.0f, 0.0f);
+        this.transform.position = new Vector3(-380.0f, 20.0f, 0.0f);
+        col.transform.position = new Vector3(80.0f, 0.0f, 0.0f);
         this.velocity = this.velocityInitial;
         col.velocity = Vector3.zero;
         this.J = 0.0f;
@@ -731,7 +731,9 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponse2D(CollisionObject col) {
-        normalVector = (col.transform.position - this.transform.position);
+        normalVector.x = Mathf.Sqrt(Mathf.Pow(40f, 2f) - Mathf.Pow(-20f, 2f));
+        normalVector.y = -20f;
+        normalVector.z = 0f;
         Vector3 normalHat = normalVector.normalized;
         float uin = Vector3.Dot(this.velocityInitial, normalHat);
         float vin = Vector3.Dot(col.velocityInitial, normalHat);
@@ -740,22 +742,23 @@ public class Physics : MonoBehaviour {
         Vector3 tVector = Vector3.Cross(Vector3.Cross(normalHat, this.velocityInitial), normalHat);
         Vector3 tHat = tVector.normalized;
         float uit = Vector3.Dot(this.velocityInitial, tHat);
+        Vector3 uitt = new Vector3(uit * tHat.x, uit * tHat.y, 0f);
         float vit = Vector3.Dot(col.velocityInitial, tHat);
+        Vector3 vitt = new Vector3(vit * tHat.x, vit * tHat.y, 0f);
         J = -vrn * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
         Vector3 Jn = -vrnn * (coefficientOfRestitution + 1) * ((this.mass * col.mass) / (this.mass + col.mass));
-        Vector3 ufn = new Vector3((Jn.x / this.mass) + uin * normalHat.x, (Jn.y / this.mass) + uin * normalHat.y, 0.0f);
-        Vector3 vfn = new Vector3((Jn.x / col.mass) + vin * normalHat.x, (Jn.y / col.mass) + vin * normalHat.y, 0.0f);
-        Vector3 uf = new Vector3(ufn.x + uit * tHat.x, ufn.y + uit * tHat.y, 0.0f);
-        Vector3 vf = new Vector3(vfn.x + vit * tHat.x, vfn.y + vit * tHat.y, 0.0f);
+        Vector3 ufnn = new Vector3((Jn.x / this.mass) + uin * normalHat.x, (Jn.y / this.mass) + uin * normalHat.y, 0.0f);
+        Vector3 vfnn = new Vector3((-Jn.x / col.mass) + vin * normalHat.x, (-Jn.y / col.mass) + vin * normalHat.y, 0.0f);
+        Vector3 uf = new Vector3(ufnn.x + uitt.x, ufnn.y + uitt.y, 0.0f);
+        Vector3 vf = new Vector3(vfnn.x + vitt.x, vfnn.y + vitt.y, 0.0f);
         if (haveCollided) {
-            Debug.Log("Colliding");
             haveCollided = false;
             collisionCount++;
             if (this.name == "Object1") {
                 this.velocity = uf;
             }
             if (col.name == "Object2") {
-                col.velocity = -vf;
+                col.velocity = vf;
             }
         }
     }
@@ -859,7 +862,7 @@ public class Physics : MonoBehaviour {
         p_ixText.text = "p_ix = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
         p_fxText.text = "p_fx = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
         p_fyText.text = "p_fy = " + (this.mass * this.velocity.y) + " + " + (col.mass * col.velocity.y) + " = " + ((this.mass * this.velocity.y) + (col.mass * col.velocity.y));
-        KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.x, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.x, 2f));
-        KE_fText.text = "KE_f = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocity.x, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.x, 2f));;
+        KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)) + " + " + (((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)));
+        KE_fText.text = "KE_f = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)) + " = " + (((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)));
     }
 }

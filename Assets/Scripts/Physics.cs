@@ -460,10 +460,10 @@ public class Physics : MonoBehaviour {
             this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y - 10f, 0);
         }
         if (Input.GetKeyDown(KeyCode.A)) {
-            this.transform.position = new Vector3(this.transform.position.x - 10f, this.transform.position.y + 10f, 0);
+            this.transform.position = new Vector3(this.transform.position.x - 10f, this.transform.position.y, 0);
         }
         if (Input.GetKeyDown(KeyCode.D)) {
-            this.transform.position = new Vector3(this.transform.position.x + 10f, this.transform.position.y + 10f, 0);
+            this.transform.position = new Vector3(this.transform.position.x + 10f, this.transform.position.y, 0);
         }
         if (Input.GetKeyDown(KeyCode.X)) {
             if (!(this.velocityInitial.x >= 150f)) {
@@ -492,10 +492,10 @@ public class Physics : MonoBehaviour {
             col.transform.position = new Vector3(col.transform.position.x, col.transform.position.y - 10f, 0);
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x - 10f, col.transform.position.y + 10f, 0);
+            col.transform.position = new Vector3(col.transform.position.x - 10f, col.transform.position.y, 0);
         }
         if (Input.GetKeyDown(KeyCode.RightArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x + 10f, col.transform.position.y + 10f, 0);
+            col.transform.position = new Vector3(col.transform.position.x + 10f, col.transform.position.y, 0);
         }
         if (Input.GetKeyDown(KeyCode.V)) {
             if (!(col.velocityInitial.x >= 50f)) {

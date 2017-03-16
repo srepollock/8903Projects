@@ -452,19 +452,18 @@ public class Physics : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Semicolon)) {
             if (!(coefficientOfRestitution <= 0.0f)) coefficientOfRestitution -= 0.1f;
         }
-        // Object 2 Mass
-        if (Input.GetKeyDown(KeyCode.O)) {
-            if (!(col.mass >= 10f)) col.mass += 1f;
+#region Object1 Movement
+        if (Input.GetKeyDown(KeyCode.W)) {
+            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y + 10f, 0);
         }
-        if (Input.GetKeyDown(KeyCode.L)) {
-            if (!(col.mass <= 1f)) col.mass -= 1f;
+        if (Input.GetKeyDown(KeyCode.S)) {
+            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y - 10f, 0);
         }
-        // Object 1 Mass
-        if (Input.GetKeyDown(KeyCode.I)) {
-            if (!(this.mass >= 10f)) addMass(1f);
+        if (Input.GetKeyDown(KeyCode.A)) {
+            this.transform.position = new Vector3(this.transform.position.x - 10f, this.transform.position.y + 10f, 0);
         }
-        if (Input.GetKeyDown(KeyCode.K)) {
-            if (!(this.mass <= 1f)) subMass(1f);
+        if (Input.GetKeyDown(KeyCode.D)) {
+            this.transform.position = new Vector3(this.transform.position.x + 10f, this.transform.position.y + 10f, 0);
         }
         if (Input.GetKeyDown(KeyCode.X)) {
             if (!(this.velocityInitial.x >= 150f)) {
@@ -478,6 +477,26 @@ public class Physics : MonoBehaviour {
                 this.velocity.x -= 10f;
             }
         }
+        if (Input.GetKeyDown(KeyCode.I)) {
+            if (!(this.mass >= 10f)) addMass(1f);
+        }
+        if (Input.GetKeyDown(KeyCode.K)) {
+            if (!(this.mass <= 1f)) subMass(1f);
+        }
+#endregion
+#region Object2 Movement
+        if (Input.GetKeyDown(KeyCode.UpArrow)) {
+            col.transform.position = new Vector3(col.transform.position.x, col.transform.position.y + 10f, 0);
+        }
+        if (Input.GetKeyDown(KeyCode.DownArrow)) {
+            col.transform.position = new Vector3(col.transform.position.x, col.transform.position.y - 10f, 0);
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+            col.transform.position = new Vector3(col.transform.position.x - 10f, col.transform.position.y + 10f, 0);
+        }
+        if (Input.GetKeyDown(KeyCode.RightArrow)) {
+            col.transform.position = new Vector3(col.transform.position.x + 10f, col.transform.position.y + 10f, 0);
+        }
         if (Input.GetKeyDown(KeyCode.V)) {
             if (!(col.velocityInitial.x >= 50f)) {
                 col.velocityInitial.x += 10f;
@@ -490,12 +509,13 @@ public class Physics : MonoBehaviour {
                 col.velocity.x -= 10f;
             }
         }
-        if (Input.GetKeyDown(KeyCode.R)) {
-            if (!(this.coefficientOfRestitution >= 1f)) this.coefficientOfRestitution += 0.1f; 
+        if (Input.GetKeyDown(KeyCode.O)) {
+            if (!(col.mass >= 10f)) col.mass += 1f;
         }
-        if (Input.GetKeyDown(KeyCode.E)) {
-            if (!(this.coefficientOfRestitution <= 0f)) this.coefficientOfRestitution -= 0.1f; 
+        if (Input.GetKeyDown(KeyCode.L)) {
+            if (!(col.mass <= 1f)) col.mass -= 1f;
         }
+#endregion
         // Movement function called here
         if (!stopped) {
             this.transform.Translate(velocity * Time.deltaTime);

@@ -170,9 +170,13 @@ public class Physics : MonoBehaviour {
     /// </summary>
     float J;
     /// <summary>
-    /// Collison count used in PRoject 9. Should be only 1.
+    /// Collison count used in Project 9. Should be only 1.
     /// </summary>
     int collisionCount = 0;
+    /// <summary>
+    /// Normal vector of the collision. Used in Project 10
+    /// </summary>
+    Vector3 normalVector;
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
@@ -184,10 +188,13 @@ public class Physics : MonoBehaviour {
                 finalVText,
                 eText,
                 impulseJText,
-                collisionText,
+                nText,
                 collisionCountText,
-                p_iText,
-                P_fText;
+                p_ixText,
+                p_fxText,
+                p_fyText,
+                KE_iText,
+                KE_fText;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -612,40 +619,6 @@ public class Physics : MonoBehaviour {
         return new Vector3(x, y, z);
     }
 
-// // DEPRICATED
-//     /// <summary>
-//     /// Initialize the Rotation values
-//     /// </summary>
-//     public void initCarRotation(Arrow arrow, Car car) {
-//         resetTheta();
-//         resetOmega();
-//         r = arrowToCOM(arrow.transform.position, car.COM);
-//         I = car.getInertiaCar();
-//         alpha = (calculateAngularAcceleration(r, force, I));
-//         resetTimer();
-//     }
-// DEPRICATED
-    // /// <summary>
-    // /// Rotation loop of the object
-    // /// </summary>
-    // public void rotateCarLoop(Car car, Arrow arrow) {
-    //     r = arrowToCOM(arrow.transform.position, car.COM);
-    //     theta = calculateRotationAngle(thetao, previousOmega, alpha, timer);
-    //     omega = calculateAngularVelocity(omega, alpha, Time.deltaTime);
-    //     Debug.Log("Omega: " + omega.z);
-    //     if (!stopAcceleration) {
-    //         alpha = calculateAngularAcceleration(r, F, I);
-    //     } else {
-    //         alpha = new Vector3();
-    //     }
-    //     if (alphaBool) {
-    //         alpha = new Vector3();
-    //     }
-    //     previousOmega = omega;
-    //     //this.transform.Rotate(omega * Mathf.Rad2Deg * Time.deltaTime);
-    //     this.transform.RotateAround(car.COM, Vector3.forward, (omega.z * Mathf.Rad2Deg * Time.deltaTime));
-    //     if (getTimer() >= 1.96f) stopAcceleration = true;
-    // }
     /// <summary>
     /// Move the car
     /// </summary>
@@ -703,8 +676,8 @@ public class Physics : MonoBehaviour {
     /// Different for each project.
     /// </summary>
     void resetPosition() {
-        this.transform.position = new Vector3(-380.0f, 0.0f, 0.0f);
-        col.transform.position = new Vector3(80.0f, 30.0f, 0.0f);
+        this.transform.position = new Vector3(-380.0f, 370.0f, 0.0f);
+        col.transform.position = new Vector3(80.0f, 400.0f, 0.0f);
         this.velocity = this.velocityInitial;
         col.velocity = Vector3.zero;
         this.J = 0.0f;
@@ -738,8 +711,8 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponse2D(CollisionObject col) {
-        Vector3 normal = (col.transform.position - this.transform.position);
-        Vector3 normalHat = normal.normalized;
+        normalVector = (col.transform.position - this.transform.position);
+        Vector3 normalHat = normalVector.normalized;
         float uin = Vector3.Dot(this.velocityInitial, normalHat);
         float vin = Vector3.Dot(col.velocityInitial, normalHat);
         float vrn = (uin - vin);
@@ -861,9 +834,12 @@ public class Physics : MonoBehaviour {
         finalVText.text = "v = " + col.velocity.ToString() + " m/s";
         eText.text = "e = " + this.coefficientOfRestitution + " (ed)";
         impulseJText.text = "J = " + this.J.ToString() + " kg m/s";
-        collisionText.text = "First collision = " + haveCollided;
+        nText.text = "n = " + col.transform.position.ToString() + " - " + this.transform.position.ToString() + " = " + normalVector.ToString();
         collisionCountText.text = "Collision Count = " + collisionCount;
-        p_iText.text = "p_i = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
-        P_fText.text = "p_f = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
+        p_ixText.text = "p_ix = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
+        p_fxText.text = "p_fx = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
+        p_fyText.text = "p_fy = " + (this.mass * this.velocity.y) + " + " + (col.mass * col.velocity.y) + " = " + ((this.mass * this.velocity.y) + (col.mass * col.velocity.y));
+        KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.x, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.x, 2f));
+        KE_fText.text = "KE_f = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocity.x, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.x, 2f));;
     }
 }

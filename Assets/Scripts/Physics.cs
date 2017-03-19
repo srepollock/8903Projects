@@ -93,7 +93,7 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Initial Angular Velocity
     /// </summary>
-    Vector3 omegao = new Vector3(0f, 0f, 0f);
+    Vector3 omegao = Vector3.zero;
     /// <summary>
     /// Angular Velocity
     /// </summary>
@@ -101,7 +101,7 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Previous omega. Used for updating.
     /// </summary>
-    Vector3 previousOmega = new Vector3(0f, 0f, 0f);
+    Vector3 previousOmega = Vector3.zero;
     /// <summary>
     /// Initial motion about the X axis of the object in 2D/3D particle 
 	/// kinematics
@@ -763,10 +763,43 @@ public class Physics : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// First collision response of two objects in 2D that will rotate.
+    /// </summary>
+    /// <param name="col">Collision object</param>
+    void collisionResponseRotate(CollisionObject col) {
+        Vector3 p1 = this.transform.position, p2 = col.transform.position;
+        Vector2 P = new Vector2(p2.x - 20f, p1.y + (p2.y - p1.y) / 2f);
+        Vector3 normalHat = Vector3.right;
+        float vr = this.velocityInitial.x - col.velocityInitial.x;
+        Vector3 r1 = new Vector3 (P.x - this.transform.position.x, P.y - this.transform.position.y, 0f);
+        Vector3 r2 = new Vector3 (P.x - col.transform.position.x, P.y - col.transform.position.y, 0f);
+        float I1 = 0f, I2 = 0f;
+        Vector3 bracket1 = Vector3.Cross((Vector3.Cross(r1, normalHat) / I1), r1);
+        Vector3 bracket2 = Vector3.Cross((Vector3.Cross(r2, normalHat) / I2), r2);
+        float bottomBracket = (1f / this.mass) + (1f / col.mass) + Vector3.Dot(normalHat, bracket1) + Vector3.Dot(normalHat, bracket2);
+        J = -1 * vr * (coefficientOfRestitution - 1) * (1 / bottomBracket);
+        Vector3 Jn = J * normalHat;
+        Vector3 ufxn = (Jn / this.mass) + this.velocityInitial.x * normalHat;
+        Vector3 vfxn = (Jn / col.mass) + col.velocityInitial.x * normalHat;
+        omega = omegao + Vector3.Cross(r1, Jn) / I1;
+        col.omega = col.omegao + Vector3.Cross(r2, Jn) / I2;
+        if (haveCollided) {
+            haveCollided = false;
+            collisionCount++;
+            this.velocity = ufxn;
+            col.velocity = vfxn;
+        }
+    }
+
     void OnTriggerEnter(Collider collider) {
         if (collider.name == "Object2" && collider.GetComponent<CollisionObject>() != null) {
             if (collisionCount <= 0) haveCollided = true; // Was hitting twice
-            collisionResponse2D(collider.GetComponent<CollisionObject>());
+            if (haveCollided) {
+                this.transform.Translate(new Vector3(-40, 0, 0));
+                collider.transform.Translate(new Vector3(40, 0, 0));
+            }
+            collisionResponseRotate(collider.GetComponent<CollisionObject>());
         }
     }
 #region Not Working. //TODO Fix Wind Drag

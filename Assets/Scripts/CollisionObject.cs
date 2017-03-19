@@ -6,6 +6,8 @@ public class CollisionObject : MonoBehaviour {
 	public float mass;
 	public Vector3 velocityInitial;
 	public Vector3 velocity;
+	public Vector3 omegao = Vector3.zero;
+	public Vector3 omega;
 
 	// Use this for initialization
 	void Start () {

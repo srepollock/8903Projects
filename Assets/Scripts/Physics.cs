@@ -557,8 +557,7 @@ public class Physics : MonoBehaviour {
 	/// <param name="_alpha">Alpha</param>
 	/// <param name="_t">Total time</param>
 	/// <returns>Omega</returns>
-	Vector3 calculateAngularVelocity(Vector3 _omega, Vector3 _alpha, float _t)
-	{
+	Vector3 calculateAngularVelocity(Vector3 _omega, Vector3 _alpha, float _t){
         float curOmega = _omega.z + (_alpha.z * _t);
         previousOmega.z = curOmega;
 		return new Vector3(0f, 0f, curOmega);
@@ -571,8 +570,7 @@ public class Physics : MonoBehaviour {
 	/// <param name="_w">Omega</param>
 	/// <param name="_R">Radius</param>
 	/// <returns>Velocity of rotation</returns>
-	Vector3 calculateRotationVelocity(Vector3 _v, Vector3 _omega, Vector3 _R)
-	{
+	Vector3 calculateRotationVelocity(Vector3 _v, Vector3 _omega, Vector3 _R){
 		return _v + Vector3.Cross(_omega, _R);
 	}
 
@@ -584,8 +582,7 @@ public class Physics : MonoBehaviour {
 	/// <param name="_alpha">Alpha</param>
 	/// <param name="_R">Radius</param>
 	/// <returns>Acceleration of rotation</returns>
-	Vector3 calculateRotationAcceleration(Vector3 _acg, Vector3 _omega, Vector3 _alpha, Vector3 _R)
-	{
+	Vector3 calculateRotationAcceleration(Vector3 _acg, Vector3 _omega, Vector3 _alpha, Vector3 _R){
 		return _acg + 
 			Vector3.Cross(_alpha, _R) + 
 			Vector3.Cross(_omega, Vector3.Cross(_omega, _R));
@@ -599,8 +596,7 @@ public class Physics : MonoBehaviour {
 	/// <param name="_t">Total time</param>
 	/// <param name="_alpha">Angular Acceleration</param>
 	/// <returns>Theta at time</returns>
-	float calculateRotationAngle(float _thetao, Vector3 _omega, Vector3 _alpha, float _t)
-	{
+	float calculateRotationAngle(float _thetao, Vector3 _omega, Vector3 _alpha, float _t){
         Debug.Log("Alpha: " + alpha.z);
 		return _thetao + (_omega.z * _t) + (0.5f * _alpha.z * Mathf.Pow(_t, 2));
 	}

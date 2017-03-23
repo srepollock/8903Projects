@@ -8,6 +8,8 @@ public class CollisionObject : MonoBehaviour {
 	public Vector3 velocity;
 	public Vector3 omegao = Vector3.zero;
 	public Vector3 omega;
+	public float I = 0;
+	public GameObject cube;
 
 	// Use this for initialization
 	void Start () {
@@ -18,6 +20,7 @@ public class CollisionObject : MonoBehaviour {
 	void Update () {
 		if (!physics.getStopped()) {
 			this.transform.Translate(velocity * Time.deltaTime);
+			cube.transform.Rotate(omega);
 		}
 	}
 }

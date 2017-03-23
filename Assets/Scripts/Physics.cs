@@ -7,6 +7,7 @@ public class Physics : MonoBehaviour {
     /// Collision Object for Project 9
     /// </summary>
     public CollisionObject col;
+    public GameObject cube;
 #endregion
 #region Public Physics Variabls
     /// <summary>
@@ -177,6 +178,8 @@ public class Physics : MonoBehaviour {
     /// Normal vector of the collision. Used in Project 10
     /// </summary>
     Vector3 normalVector;
+    Vector3 Lf1, Lf2;
+    float iwf1, iwf2;
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
@@ -194,7 +197,9 @@ public class Physics : MonoBehaviour {
                 p_fxText,
                 p_fyText,
                 KE_iText,
-                KE_fText;
+                KE_fText,
+                L_iText,
+                L_fText;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -519,6 +524,7 @@ public class Physics : MonoBehaviour {
         // Movement function called here
         if (!stopped) {
             this.transform.Translate(velocity * Time.deltaTime);
+            cube.transform.Rotate(omega);
         }
         updateText();
     }
@@ -764,27 +770,43 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponseRotate(CollisionObject col) {
-        Vector3 p1 = this.transform.position, p2 = col.transform.position;
+        // Get the position of the collision
+        Vector3 p1 = this.transform.position, 
+                p2 = col.transform.position;
         Vector2 P = new Vector2(p2.x - 20f, p1.y + (p2.y - p1.y) / 2f);
+        // Respond using nHat = iHat (right)
         Vector3 normalHat = Vector3.right;
+        // Vr = (uix - vix)
         float vr = this.velocityInitial.x - col.velocityInitial.x;
-        Vector3 r1 = new Vector3 (P.x - this.transform.position.x, P.y - this.transform.position.y, 0f);
-        Vector3 r2 = new Vector3 (P.x - col.transform.position.x, P.y - col.transform.position.y, 0f);
-        float I1 = 0f, I2 = 0f;
-        Vector3 bracket1 = Vector3.Cross((Vector3.Cross(r1, normalHat) / I1), r1);
-        Vector3 bracket2 = Vector3.Cross((Vector3.Cross(r2, normalHat) / I2), r2);
-        float bottomBracket = (1f / this.mass) + (1f / col.mass) + Vector3.Dot(normalHat, bracket1) + Vector3.Dot(normalHat, bracket2);
-        J = -1 * vr * (coefficientOfRestitution - 1) * (1 / bottomBracket);
+        // Get center of object to point of collision
+        Vector3 r1 = new Vector3 (20f, P.y - this.transform.position.y, 0f); // 20 is size of the object / 2 (half)
+        Vector3 r2 = new Vector3 (20f, P.y - col.transform.position.y, 0f);
+        // Set the moment of Inertia for each
+        this.I = (1f/12f) * this.mass * (Mathf.Pow(this.transform.lossyScale.x, 2) + (Mathf.Pow(this.transform.lossyScale.y, 2)));
+        col.I = (1f/12f) * col.mass * (Mathf.Pow(col.transform.lossyScale.x, 2) + (Mathf.Pow(col.transform.lossyScale.y, 2))); // moment of inertia x = l y = width
+        // Caculate bottom bracket for J calculation
+        Vector3 bracket1 = Vector3.Cross((Vector3.Cross(r1, normalHat) / this.I), r1);
+        Vector3 bracket2 = Vector3.Cross((Vector3.Cross(r2, normalHat) / col.I), r2);
+        float bottomBracket = (1f / this.mass) + (1f / col.mass) + Vector3.Dot(normalHat, bracket1) + Vector3.Dot(normalHat, bracket2); 
+        J = -vr * (coefficientOfRestitution + 1) * (1 / bottomBracket);
         Vector3 Jn = J * normalHat;
+        // Calculate Final Velocites
         Vector3 ufxn = (Jn / this.mass) + this.velocityInitial.x * normalHat;
-        Vector3 vfxn = (Jn / col.mass) + col.velocityInitial.x * normalHat;
-        omega = omegao + Vector3.Cross(r1, Jn) / I1;
-        col.omega = col.omegao + Vector3.Cross(r2, Jn) / I2;
+        Vector3 vfxn = (-Jn / col.mass) + col.velocityInitial.x * normalHat;
+        // Calculate Final Rotations
+        omega = omegao + Vector3.Cross(r1, Jn) / this.I;
+        col.omega = col.omegao + Vector3.Cross(r2, Jn) / col.I;
+        //Lf
+        Lf1 = Vector3.Cross(r1, (this.velocity * this.mass));
+        Lf2 = Vector3.Cross(r2, (col.velocity * col.mass));
+        iwf1 = this.I * this.omega.z;
+        iwf2 = col.I * col.omega.z;
         if (haveCollided) {
             haveCollided = false;
             collisionCount++;
             this.velocity = ufxn;
             col.velocity = vfxn;
+            stopped = true;
         }
     }
 
@@ -792,10 +814,10 @@ public class Physics : MonoBehaviour {
         if (collider.name == "Object2" && collider.GetComponent<CollisionObject>() != null) {
             if (collisionCount <= 0) haveCollided = true; // Was hitting twice
             if (haveCollided) {
+                collisionResponseRotate(collider.GetComponent<CollisionObject>());
                 this.transform.Translate(new Vector3(-40, 0, 0));
                 collider.transform.Translate(new Vector3(40, 0, 0));
             }
-            collisionResponseRotate(collider.GetComponent<CollisionObject>());
         }
     }
 #region Not Working. //TODO Fix Wind Drag
@@ -891,7 +913,10 @@ public class Physics : MonoBehaviour {
         p_ixText.text = "p_ix = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
         p_fxText.text = "p_fx = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
         p_fyText.text = "p_fy = " + (this.mass * this.velocity.y) + " + " + (col.mass * col.velocity.y) + " = " + ((this.mass * this.velocity.y) + (col.mass * col.velocity.y));
+        L_iText.text = "L_i = " ;
+        L_fText.text = "L_f = " + Lf1.z + " + " + iwf1 + " + " + Lf2.z + " + " + iwf2 + " = " + (Lf1.z + iwf1 + Lf2.z + iwf2);
         KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)) + " + " + (((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)));
-        KE_fText.text = "KE_f = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)) + " = " + (((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)));
+        float temp = ((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f));
+        KE_fText.text = "KE_f = " + temp + " + " + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)) + " + " + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f)) + " = " + (((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f) + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f))) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f) + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f))));
     }
 }

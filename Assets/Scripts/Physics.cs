@@ -8,6 +8,8 @@ public class Physics : MonoBehaviour {
     /// </summary>
     public CollisionObject col;
     public GameObject cube;
+    float bracket1, bracket2;
+    float bottomBracket;
 #endregion
 #region Public Physics Variabls
     /// <summary>
@@ -38,12 +40,6 @@ public class Physics : MonoBehaviour {
     /// Force Vector of the object
     /// </summary>
     public Vector3 force;
-    /// <summary>
-    /// Coefficient of Resitution (e).
-    /// 
-    /// Ranges from 0 <= e <= 1 (steps of 0.1)
-    /// </summary>
-    public float coefficientOfRestitution;
 #endregion
 #region Private Physics Variables
     /// <summary>
@@ -149,7 +145,11 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Drag coefficient. Used in boat project
     /// </summary>
-    public float dragCoefficient;
+    float dragCoefficient;
+    /// <summary>
+    /// Friction Coefficient. Used in project 12
+    /// </summary>
+    float frictionCoefficient = 0;
     /// <summary>
     /// Wind for kinematics
     /// </summary>
@@ -178,8 +178,28 @@ public class Physics : MonoBehaviour {
     /// Normal vector of the collision. Used in Project 10
     /// </summary>
     Vector3 normalVector;
-    Vector3 Lf1, Lf2;
-    float iwf1, iwf2;
+    /// <summary>
+    /// Final L 1
+    /// </summary>
+    Vector3 Lf1;
+    /// <summary>
+    /// Final L 2
+    /// </summary>
+    Vector3 Lf2;
+    /// <summary>
+    /// Final iwf 1
+    /// </summary>
+    float iwf1;
+    /// <summary>
+    /// Final iwf 2
+    /// </summary>
+    float iwf2;
+    /// <summary>
+    /// Coefficient of Resitution (e).
+    /// 
+    /// Ranges from 0 <= e <= 1 (steps of 0.1)
+    /// </summary>
+    float coefficientOfRestitution;
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
@@ -190,6 +210,7 @@ public class Physics : MonoBehaviour {
                 finalUText,
                 finalVText,
                 eText,
+                fText,
                 impulseJText,
                 nText,
                 collisionCountText,
@@ -199,7 +220,10 @@ public class Physics : MonoBehaviour {
                 KE_iText,
                 KE_fText,
                 L_iText,
-                L_fText;
+                L_fText,
+                m3Text,
+                m4Text,
+                m5Text;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -457,6 +481,12 @@ public class Physics : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Semicolon)) {
             if (!(coefficientOfRestitution <= 0.0f)) coefficientOfRestitution -= 0.1f;
         }
+        if (Input.GetKeyDown(KeyCode.F)) {
+            if (!(frictionCoefficient >= 1.0)) frictionCoefficient += 0.1f;
+        }
+        if (Input.GetKeyDown(KeyCode.G)) {
+            if (!(frictionCoefficient <= 0.0f)) frictionCoefficient -= 0.1f;
+        }
 #region Object1 Movement
         if (Input.GetKeyDown(KeyCode.W)) {
             this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y + 10f, 0);
@@ -698,10 +728,10 @@ public class Physics : MonoBehaviour {
     /// Different for each project.
     /// </summary>
     void resetPosition() {
-        this.transform.position = new Vector3(-380.0f, 20.0f, 0.0f);
+        this.transform.position = new Vector3(-380.0f, 30.0f, 0.0f);
         col.transform.position = new Vector3(80.0f, 0.0f, 0.0f);
         this.velocity = this.velocityInitial;
-        col.velocity = Vector3.zero;
+        col.velocity = col.velocityInitial;
         this.J = 0.0f;
         collisionCount = 0;
         haveCollided = false;
@@ -770,32 +800,43 @@ public class Physics : MonoBehaviour {
     /// </summary>
     /// <param name="col">Collision object</param>
     void collisionResponseRotate(CollisionObject col) {
+        // Move Back OBJ1
+        float rad1 = this.transform.localScale.x / 2f;
+        float obj1XPosDiff = Mathf.Sqrt(Mathf.Pow(2f * rad1, 2f) - Mathf.Pow(col.transform.position.y - this.transform.position.y, 2f));
+        this.transform.position = new Vector3(col.transform.position.x - obj1XPosDiff, this.transform.position.y, this.transform.position.z);
         // Get the position of the collision
         Vector3 p1 = this.transform.position, 
                 p2 = col.transform.position;
-        Vector2 P = new Vector2(p2.x - 20f, p1.y + (p2.y - p1.y) / 2f);
+        Vector3 P = new Vector3((p2.x - ((p2.x - p1.x) / 2f)), (p1.y + (p2.y - p1.y) / 2f), 0f);
         // Respond using nHat = iHat (right)
-        Vector3 normalHat = Vector3.right;
+        normalVector = this.transform.position - col.transform.position;
+        Vector3 normalHat = normalVector.normalized;
+
+        Vector3 tVector = Vector3.Cross(Vector3.Cross(normalHat, this.velocityInitial), normalHat);
+        Vector3 tHat = tVector.normalized;
         // Vr = (uix - vix)
-        float vr = this.velocityInitial.x - col.velocityInitial.x;
+        Vector3 vr = this.velocityInitial - col.velocityInitial;
         // Get center of object to point of collision
-        Vector3 r1 = new Vector3 (20f, P.y - this.transform.position.y, 0f); // 20 is size of the object / 2 (half)
-        Vector3 r2 = new Vector3 (20f, P.y - col.transform.position.y, 0f);
+        Vector3 r1 = P - this.transform.position;
+        r1.z = 0f;
+        Vector3 r2 = P - col.transform.position;
+        r2.z = 0f;
         // Set the moment of Inertia for each
-        this.I = (1f/12f) * this.mass * (Mathf.Pow(this.transform.lossyScale.x, 2) + (Mathf.Pow(this.transform.lossyScale.y, 2)));
-        col.I = (1f/12f) * col.mass * (Mathf.Pow(col.transform.lossyScale.x, 2) + (Mathf.Pow(col.transform.lossyScale.y, 2))); // moment of inertia x = l y = width
+        this.I = (2f/5f) * this.mass * (Mathf.Pow(this.transform.lossyScale.x / 2f, 2));
+        col.I = (2f/5f) * col.mass * (Mathf.Pow(col.transform.lossyScale.x / 2f, 2));
         // Caculate bottom bracket for J calculation
-        Vector3 bracket1 = Vector3.Cross((Vector3.Cross(r1, normalHat) / this.I), r1);
-        Vector3 bracket2 = Vector3.Cross((Vector3.Cross(r2, normalHat) / col.I), r2);
-        float bottomBracket = (1f / this.mass) + (1f / col.mass) + Vector3.Dot(normalHat, bracket1) + Vector3.Dot(normalHat, bracket2); 
-        J = -vr * (coefficientOfRestitution + 1) * (1 / bottomBracket);
+        bracket1 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r1, normalHat) / this.I), r1));
+        bracket2 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r2, normalHat) / col.I), r2));
+        bottomBracket = (1f / this.mass) + (1f / col.mass) + bracket1 + bracket2; 
+        bottomBracket = 1f / bottomBracket;
+        J = -Vector3.Dot(vr, normalHat) * (coefficientOfRestitution + 1) * bottomBracket;
         Vector3 Jn = J * normalHat;
         // Calculate Final Velocites
-        Vector3 ufxn = (Jn / this.mass) + this.velocityInitial.x * normalHat;
-        Vector3 vfxn = (-Jn / col.mass) + col.velocityInitial.x * normalHat;
+        Vector3 ufxn = this.velocityInitial + (J / this.mass) * (normalHat + frictionCoefficient * tHat);
+        Vector3 vfxn = col.velocityInitial + (-J / col.mass) * (normalHat - frictionCoefficient * tHat);
         // Calculate Final Rotations
-        omega = omegao + Vector3.Cross(r1, Jn) / this.I;
-        col.omega = col.omegao + Vector3.Cross(r2, Jn) / col.I;
+        omega = omegao + (J / this.I) * (Vector3.Cross(r1, (normalHat + frictionCoefficient * tHat)));
+        col.omega = col.omegao + (J / col.I) * (Vector3.Cross(r2, (normalHat - frictionCoefficient * tHat)));
         //Lf
         Lf1 = Vector3.Cross(r1, (this.velocity * this.mass));
         Lf2 = Vector3.Cross(r2, (col.velocity * col.mass));
@@ -907,6 +948,7 @@ public class Physics : MonoBehaviour {
         finalUText.text = "Final u = " + this.velocity.ToString() + " m/s";
         finalVText.text = "v = " + col.velocity.ToString() + " m/s";
         eText.text = "e = " + this.coefficientOfRestitution + " (ed)";
+        fText.text = "mu = " + this.frictionCoefficient;
         impulseJText.text = "J = " + this.J.ToString() + " kg m/s";
         nText.text = "n = " + col.transform.position.ToString() + " - " + this.transform.position.ToString() + " = " + normalVector.ToString();
         collisionCountText.text = "Collision Count = " + collisionCount;
@@ -918,5 +960,8 @@ public class Physics : MonoBehaviour {
         KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)) + " + " + (((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)));
         float temp = ((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f));
         KE_fText.text = "KE_f = " + temp + " + " + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)) + " + " + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f)) + " = " + (((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f) + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f))) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f) + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f))));
+        m3Text.text = "M3 = " + bracket1;
+        m4Text.text = "M4 = " + bracket2;
+        m5Text.text = "M5 = " + bottomBracket;
     }
 }

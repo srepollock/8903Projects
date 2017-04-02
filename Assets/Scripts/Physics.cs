@@ -3,7 +3,8 @@ using System.Collections;
 using UnityEngine.UI;
 
 public class Physics : MonoBehaviour {
-#region Public Object Connections - Variable per Project
+#region Public Variable per Project
+    public Transform Lpoint, Rpoint, Tpoint;
 #endregion
 #region Public Physics Variabls
     /// <summary>
@@ -34,6 +35,10 @@ public class Physics : MonoBehaviour {
     /// Force Vector of the object
     /// </summary>
     public Vector3 force;
+    /// <summary>
+    /// Inertia of the object.
+    /// </summary>
+    public float inertia;
 #endregion
 #region Private Physics Variables
     /// <summary>
@@ -452,6 +457,9 @@ public class Physics : MonoBehaviour {
         if (!stopped) {
             
         }
+
+        centerOfMassLoop();
+
         updateText();
     }
     void FixedUpdate() {
@@ -468,8 +476,7 @@ public class Physics : MonoBehaviour {
     /// <returns>Physics array of child components.</returns>
     Physics[] getChildPhysicsComponents() {
         ArrayList childAL = new ArrayList();
-        Transform[] children = GetComponentsInChildren<Transform>();
-        foreach (Transform child in children) {
+        foreach (Transform child in transform) {
             childAL.Add(child.GetComponent<Physics>());
         }
         Physics[] objsOut = (Physics[]) childAL.ToArray(typeof(Physics));
@@ -537,6 +544,40 @@ public class Physics : MonoBehaviour {
             bottomTotal += gos[i].mass;
         }
         return topTotal / bottomTotal;
+    }
+
+    /// <summary>
+    /// Distance to the COM for the game object.
+    /// </summary>
+    /// <param name="go">Game object to find the Distance</param>
+    /// <returns></returns>
+    float distanceToCOM(Physics go) {
+        return Mathf.Sqrt(
+            Mathf.Pow(go.transform.position.x - this.COM.x, 2f) +
+            Mathf.Pow(go.transform.position.y - this.COM.y, 2f)
+        );
+    }
+
+    /// <summary>
+    /// Total inertia of the parent object. Should be called on the upper most object.
+    /// </summary>
+    /// <param name="gos">Physics Game Objects</param>
+    /// <returns>Total inertia</returns>
+    float totalInertia(Physics[] gos) {
+        float ti = 0;
+        for (int i = 0; i < gos.Length; i++) {
+            ti += gos[i].inertia + (gos[i].mass * Mathf.Pow(distanceToCOM(gos[i]), 2f));
+        }
+        return ti;
+    }
+
+    /// <summary>
+    /// Loop for center of mass variables.
+    /// </summary>
+    void centerOfMassLoop() {
+        Physics[] physicsObjects = getChildPhysicsComponents();
+        calculateCenterOfMass(physicsObjects);
+        this.inertia = totalInertia(physicsObjects);
     }
 #endregion
 

@@ -1,15 +1,9 @@
 ﻿using UnityEngine;
+using System.Collections;
 using UnityEngine.UI;
 
 public class Physics : MonoBehaviour {
 #region Public Object Connections - Variable per Project
-    /// <summary>
-    /// Collision Object for Project 9
-    /// </summary>
-    public CollisionObject col;
-    public GameObject cube;
-    float bracket1, bracket2;
-    float bottomBracket;
 #endregion
 #region Public Physics Variabls
     /// <summary>
@@ -31,7 +25,7 @@ public class Physics : MonoBehaviour {
     /// <summary>
     /// Mass of the object in kg.
     /// </summary>
-    public float mass;
+    public float mass = 1; // Default 1
     /// <summary>
     /// Radius of the object to be rotated (basically width)
     /// </summary>
@@ -47,10 +41,14 @@ public class Physics : MonoBehaviour {
     /// </summary>
     float timer = 0f;
     /// <summary>
+    /// Center of Mass for the object, grabbing all subsequent objects masses
+    /// </summary>
+    Vector3 COM = Vector3.zero;
+    /// <summary>
     /// Thrust to move the object (in water). Should remain constant for test 
     /// purposes
     /// </summary>
-    public float thrust;
+    float thrust;
     /// <summary>
     /// Boolean for stopping the objects movement.
     /// </summary>
@@ -203,27 +201,6 @@ public class Physics : MonoBehaviour {
 #endregion
 #region UI Text Variables
 	// End all with `...Text` for simplicity
-	public Text mass1Text,
-                mass2Text,
-                initialUText,
-                initialVText,
-                finalUText,
-                finalVText,
-                eText,
-                fText,
-                impulseJText,
-                nText,
-                collisionCountText,
-                p_ixText,
-                p_fxText,
-                p_fyText,
-                KE_iText,
-                KE_fText,
-                L_iText,
-                L_fText,
-                m3Text,
-                m4Text,
-                m5Text;
 #endregion
 #region Private Physics Variables Setters/Getters
     /// <summary>
@@ -464,97 +441,16 @@ public class Physics : MonoBehaviour {
     }
 #endregion
     void Start() {
-        velocity = velocityInitial;
+        
     }
     void Update() {
         // Input Functions
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            stopped = !stopped;
-        }
-        if (Input.GetKeyDown(KeyCode.Backspace)) {
-            stopped = true;
-            this.resetPosition();
-        }
-        if (Input.GetKeyDown(KeyCode.P)) {
-            if (!(coefficientOfRestitution >= 1.0)) coefficientOfRestitution += 0.1f;
-        }
-        if (Input.GetKeyDown(KeyCode.Semicolon)) {
-            if (!(coefficientOfRestitution <= 0.0f)) coefficientOfRestitution -= 0.1f;
-        }
-        if (Input.GetKeyDown(KeyCode.F)) {
-            if (!(frictionCoefficient >= 1.0)) frictionCoefficient += 0.1f;
-        }
-        if (Input.GetKeyDown(KeyCode.G)) {
-            if (!(frictionCoefficient <= 0.0f)) frictionCoefficient -= 0.1f;
-        }
-#region Object1 Movement
-        if (Input.GetKeyDown(KeyCode.W)) {
-            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y + 10f, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.S)) {
-            this.transform.position = new Vector3(this.transform.position.x, this.transform.position.y - 10f, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.A)) {
-            this.transform.position = new Vector3(this.transform.position.x - 10f, this.transform.position.y, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.D)) {
-            this.transform.position = new Vector3(this.transform.position.x + 10f, this.transform.position.y, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.X)) {
-            if (!(this.velocityInitial.x >= 150f)) {
-                this.velocityInitial.x += 10f;
-                this.velocity.x += 10f;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.Z)) {
-            if (!(this.velocityInitial.x <= 50f)) {
-                this.velocityInitial.x -= 10f; 
-                this.velocity.x -= 10f;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.I)) {
-            if (!(this.mass >= 10f)) addMass(1f);
-        }
-        if (Input.GetKeyDown(KeyCode.K)) {
-            if (!(this.mass <= 1f)) subMass(1f);
-        }
-#endregion
-#region Object2 Movement
-        if (Input.GetKeyDown(KeyCode.UpArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x, col.transform.position.y + 10f, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.DownArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x, col.transform.position.y - 10f, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x - 10f, col.transform.position.y, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.RightArrow)) {
-            col.transform.position = new Vector3(col.transform.position.x + 10f, col.transform.position.y, 0);
-        }
-        if (Input.GetKeyDown(KeyCode.V)) {
-            if (!(col.velocityInitial.x >= 50f)) {
-                col.velocityInitial.x += 10f;
-                col.velocity.x += 10f;
-            } 
-        }
-        if (Input.GetKeyDown(KeyCode.C)) {
-            if (!(col.velocityInitial.x <= -50f)) {
-                col.velocityInitial.x -= 10f; 
-                col.velocity.x -= 10f;
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.O)) {
-            if (!(col.mass >= 10f)) col.mass += 1f;
-        }
-        if (Input.GetKeyDown(KeyCode.L)) {
-            if (!(col.mass <= 1f)) col.mass -= 1f;
-        }
-#endregion
+        // Force changer buttons: up/down arrows
+        // Right arrow toggles R force 
+        // Left arrow toggles L force
         // Movement function called here
         if (!stopped) {
-            this.transform.Translate(velocity * Time.deltaTime);
-            cube.transform.Rotate(omega);
+            
         }
         updateText();
     }
@@ -565,6 +461,84 @@ public class Physics : MonoBehaviour {
 
 		if (!stopped) updateTimer(Time.deltaTime);
     }
+
+    /// <summary>
+    /// Get all child components as a Physics array.
+    /// </summary>
+    /// <returns>Physics array of child components.</returns>
+    Physics[] getChildPhysicsComponents() {
+        ArrayList childAL = new ArrayList();
+        Transform[] children = GetComponentsInChildren<Transform>();
+        foreach (Transform child in children) {
+            childAL.Add(child.GetComponent<Physics>());
+        }
+        Physics[] objsOut = (Physics[]) childAL.ToArray(typeof(Physics));
+        return objsOut;
+    }
+
+    /// <summary>
+    /// Calculates total mass of the object, taking a list of all child objects.
+    /// </summary>
+    /// <returns></returns>
+    float calculateTotalMass(Physics[] gos) {
+        float totalMass = 0;
+        for (int i = 0; i < gos.Length; i++) {
+            totalMass += gos[i].mass;
+        }
+        return totalMass;
+    }
+
+    Vector3 calculateCenterOfMass(Physics[] gos) {
+        float xCOM = 0, yCOM = 0, zCOM = 0;
+        xCOM = calculateXCOM(gos);
+        yCOM = calculateYCOM(gos);
+        zCOM = calculateZCOM(gos);
+        return new Vector3(xCOM, yCOM, zCOM); // z should not be changed
+    }
+
+#region COM Components
+    /// <summary>
+    /// Calculates the X component of the COM position.
+    /// </summary>
+    /// <param name="gos">Physics Game Objects</param>
+    /// <returns>X component of the COM positon</returns>
+    float calculateXCOM(Physics[] gos) {
+        float topTotal = 0, bottomTotal = 0;
+        for (int i = 0; i < gos.Length; i++) {
+            topTotal += gos[i].mass * gos[i].transform.position.x;
+            bottomTotal += gos[i].mass;
+        }
+        return topTotal / bottomTotal;
+    }
+
+    /// <summary>
+    /// Calculates the Y component of the COM position.
+    /// </summary>
+    /// <param name="gos">Physics Game Objects</param>
+    /// <returns>Y component of the COM positon</returns>
+    float calculateYCOM(Physics[] gos) {
+        float topTotal = 0, bottomTotal = 0;
+        for (int i = 0; i < gos.Length; i++) {
+            topTotal += gos[i].mass * gos[i].transform.position.y;
+            bottomTotal += gos[i].mass;
+        }
+        return topTotal / bottomTotal;
+    }
+
+    /// <summary>
+    /// Calculates the Z component of the COM position.
+    /// </summary>
+    /// <param name="gos">Physics Game Objects</param>
+    /// <returns>Z component of the COM positon</returns>
+    float calculateZCOM(Physics[] gos) {
+        float topTotal = 0, bottomTotal = 0;
+        for (int i = 0; i < gos.Length; i++) {
+            topTotal += gos[i].mass * gos[i].transform.position.z;
+            bottomTotal += gos[i].mass;
+        }
+        return topTotal / bottomTotal;
+    }
+#endregion
 
     /// <summary>
     /// Calculate the Object Acceleration
@@ -727,7 +701,7 @@ public class Physics : MonoBehaviour {
     ///
     /// Different for each project.
     /// </summary>
-    void resetPosition() {
+    void resetPosition(CollisionObject col) {
         this.transform.position = new Vector3(-380.0f, 30.0f, 0.0f);
         col.transform.position = new Vector3(80.0f, 0.0f, 0.0f);
         this.velocity = this.velocityInitial;
@@ -825,9 +799,9 @@ public class Physics : MonoBehaviour {
         this.I = (2f/5f) * this.mass * (Mathf.Pow(this.transform.lossyScale.x / 2f, 2));
         col.I = (2f/5f) * col.mass * (Mathf.Pow(col.transform.lossyScale.x / 2f, 2));
         // Caculate bottom bracket for J calculation
-        bracket1 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r1, normalHat) / this.I), r1));
-        bracket2 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r2, normalHat) / col.I), r2));
-        bottomBracket = (1f / this.mass) + (1f / col.mass) + bracket1 + bracket2; 
+        float bracket1 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r1, normalHat) / this.I), r1));
+        float bracket2 = Vector3.Dot(normalHat, Vector3.Cross((Vector3.Cross(r2, normalHat) / col.I), r2));
+        float bottomBracket = (1f / this.mass) + (1f / col.mass) + bracket1 + bracket2; 
         bottomBracket = 1f / bottomBracket;
         J = -Vector3.Dot(vr, normalHat) * (coefficientOfRestitution + 1) * bottomBracket;
         Vector3 Jn = J * normalHat;
@@ -941,27 +915,6 @@ public class Physics : MonoBehaviour {
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>
     void updateText() {
-        mass1Text.text = "M1 = " + this.mass + " kg.";
-        mass2Text.text = "M2 = " + col.mass + " kg.";
-        initialUText.text = "Initial u = " + this.velocityInitial.ToString() + " m/s";
-        initialVText.text = "v = " + col.velocityInitial.ToString() + " m/s (vfbg)";
-        finalUText.text = "Final u = " + this.velocity.ToString() + " m/s";
-        finalVText.text = "v = " + col.velocity.ToString() + " m/s";
-        eText.text = "e = " + this.coefficientOfRestitution + " (ed)";
-        fText.text = "mu = " + this.frictionCoefficient;
-        impulseJText.text = "J = " + this.J.ToString() + " kg m/s";
-        nText.text = "n = " + col.transform.position.ToString() + " - " + this.transform.position.ToString() + " = " + normalVector.ToString();
-        collisionCountText.text = "Collision Count = " + collisionCount;
-        p_ixText.text = "p_ix = " + (this.mass * this.velocityInitial.x) + " + " + (col.mass * col.velocityInitial.x) + " = " + ((this.mass * this.velocityInitial.x) + (col.mass * col.velocityInitial.x));
-        p_fxText.text = "p_fx = " + (this.mass * this.velocity.x) + " + " + (col.mass * col.velocity.x) + " = " + ((this.mass * this.velocity.x) + (col.mass * col.velocity.x));
-        p_fyText.text = "p_fy = " + (this.mass * this.velocity.y) + " + " + (col.mass * col.velocity.y) + " = " + ((this.mass * this.velocity.y) + (col.mass * col.velocity.y));
-        L_iText.text = "L_i = " ;
-        L_fText.text = "L_f = " + Lf1.z + " + " + iwf1 + " + " + Lf2.z + " + " + iwf2 + " = " + (Lf1.z + iwf1 + Lf2.z + iwf2);
-        KE_iText.text = "KE_i = " + ((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)) + " + " + (((1f/2f) * this.mass * Mathf.Pow(this.velocityInitial.magnitude, 2f)) + ((1f/2f) * col.mass * Mathf.Pow(col.velocityInitial.magnitude, 2f)));
-        float temp = ((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f));
-        KE_fText.text = "KE_f = " + temp + " + " + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f)) + " + " + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f)) + " + " + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f)) + " = " + (((1f/2f) * this.mass * Mathf.Pow(this.velocity.magnitude, 2f) + (0.5f * this.I * Mathf.Pow(this.omega.z, 2f))) + ((1f/2f) * col.mass * Mathf.Pow(col.velocity.magnitude, 2f) + (0.5f * col.I * Mathf.Pow(col.omega.z, 2f))));
-        m3Text.text = "M3 = " + bracket1;
-        m4Text.text = "M4 = " + bracket2;
-        m5Text.text = "M5 = " + bottomBracket;
+
     }
 }

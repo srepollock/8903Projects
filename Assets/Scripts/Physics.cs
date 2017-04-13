@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 using UnityEngine.UI;
 
 public class Physics : MonoBehaviour {
 #region Public Variable per Project
-    public Transform Lpoint, Rpoint, Tpoint;
+    
 #endregion
 #region Public Physics Variabls
     /// <summary>
@@ -36,9 +37,9 @@ public class Physics : MonoBehaviour {
     /// </summary>
     public Vector3 force;
     /// <summary>
-    /// Inertia of the object.
+    /// Force points of the object.
     /// </summary>
-    public float inertia;
+    public Transform[] forcePoints; // L, R, T
 #endregion
 #region Private Physics Variables
     /// <summary>
@@ -49,6 +50,10 @@ public class Physics : MonoBehaviour {
     /// Center of Mass for the object, grabbing all subsequent objects masses
     /// </summary>
     Vector3 COM = Vector3.zero;
+    /// <summary>
+    /// Inertia of the object.
+    /// </summary>
+    float inertia;
     /// <summary>
     /// Thrust to move the object (in water). Should remain constant for test 
     /// purposes
@@ -444,15 +449,49 @@ public class Physics : MonoBehaviour {
     public Vector3 getWindDirection() {
         return wind;
     }
+
+    /// <summary>
+    /// Sphere rotational inertia,
+    /// </summary>
+    /// <returns>Sphere rotational inertia</returns>
+    public float calculateSphereRotationalInertia() {
+        return this.mass * (2f/5f) * Mathf.Pow(this.transform.lossyScale.x / 2f, 2f);
+    }
+
+    /// <summary>
+    /// Square rotational inertia.
+    /// </summary>
+    /// <returns>Square rotational inertia</returns>
+    public float calculateSquareRotationalInertia() {
+        return this.mass * (1f/12f) * Mathf.Pow(this.transform.lossyScale.x / 2f, 2f);
+    }
 #endregion
     void Start() {
         
     }
+#region Game Loops
+    /// <summary>
+    /// Update Loop called by Unity. 
+    /// 
+    /// Game loops go here
+    /// </summary>
     void Update() {
         // Input Functions
         // Force changer buttons: up/down arrows
+        if (Input.GetKeyDown(KeyCode.UpArrow)) {
+            
+        }
+        if (Input.GetKeyDown(KeyCode.DownArrow)) {
+            
+        }
         // Right arrow toggles R force 
+        if (Input.GetKeyDown(KeyCode.RightArrow)) {
+            
+        }
         // Left arrow toggles L force
+        if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+            
+        }
         // Movement function called here
         if (!stopped) {
             
@@ -462,13 +501,31 @@ public class Physics : MonoBehaviour {
 
         updateText();
     }
+    /// <summary>
+    /// Fixed update function called by Unity. Time specific game loops go here.
+    /// </summary>
     void FixedUpdate() {
         if (timer >= 12f) stopped = true;
-        // Movement function called here(?)
-
-
 		if (!stopped) updateTimer(Time.deltaTime);
+        movementLoop(Time.deltaTime);
     }
+
+    /// <summary>
+    /// Move the object.
+    /// 
+    /// Should be called in fixed update.
+    /// </summary>
+    /// <param name="_dt">Delta time</param>
+    public void movementLoop(float _dt) {
+        if (!this.stopAcceleration) {
+            this.acceleration = this.calculateObjectAcceleration(this.F, this.mass);
+            this.velocity = this.calculateObjectVelocity(this.acceleration, this.getTimer());
+        } else {
+            this.acceleration = new Vector3();
+        }
+        this.transform.position += (this.velocity * Time.deltaTime);
+    }
+#endregion
 
     /// <summary>
     /// Get all child components as a Physics array.
@@ -686,6 +743,8 @@ public class Physics : MonoBehaviour {
         return new Vector3(x, y, z);
     }
 
+    // DEPRICATED
+#region Car Deprication
     /// <summary>
     /// Move the car
     /// </summary>
@@ -700,6 +759,7 @@ public class Physics : MonoBehaviour {
         }
         _car.transform.position += (velocity * Time.deltaTime);
     }
+#endregion
 
     /// <summary>
     /// Sink the boat based on mass.
@@ -952,10 +1012,13 @@ public class Physics : MonoBehaviour {
         return (_wC * wind.z * Mathf.Sin(_g.z)) / _dC;
     }
 #endregion
+
+#region Update Text
 	/// <summary>
 	/// Update all text found in region Text Variables. All are public.
 	/// </summary>
     void updateText() {
 
     }
+#endregion
 }
